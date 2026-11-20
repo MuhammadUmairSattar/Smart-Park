@@ -1,0 +1,71 @@
+name: Auto Setup SmartPark Flutter Project
+
+on:
+  push:
+    paths:
+      - '.github/workflows/setup_flutter.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  init-flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Latest Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Create Flutter Project & Configure Permissions
+        run: |
+          if [ ! -f pubspec.yaml ]; then
+            flutter create . --project-name smart_park_pro --org com.umairsattar.smartpark
+          fi
+
+          python3 - << 'EOF'
+          import os
+
+          # 1. Android minSdk 23 set karna (ML Kit OCR aur Biometrics ke liye)
+          for path in ['android/app/build.gradle.kts', 'android/app/build.gradle']:
+              if os.path.exists(path):
+                  txt = open(path).read()
+                  txt = txt.replace('minSdk = flutter.minSdkVersion', 'minSdk = 23')
+                  txt = txt.replace('minSdkVersion flutter.minSdkVersion', 'minSdkVersion 23')
+                  open(path, 'w').write(txt)
+
+          # 2. Android Camera, Internet & Biometric permissions
+          manifest = 'android/app/src/main/AndroidManifest.xml'
+          if os.path.exists(manifest):
+              txt = open(manifest).read()
+              perms = '''    <uses-permission android:name="android.permission.INTERNET"/>
+              <uses-permission android:name="android.permission.CAMERA"/>
+              <uses-permission android:name="android.permission.USE_BIOMETRIC"/>'''
+              if 'android.permission.CAMERA' not in txt:
+                  txt = txt.replace('<application', perms + '\n    <application', 1)
+                  open(manifest, 'w').write(txt)
+
+          # 3. iOS Camera & FaceID permissions
+          plist = 'ios/Runner/Info.plist'
+          if os.path.exists(plist):
+              txt = open(plist).read()
+              ios_keys = '''\t<key>NSCameraUsageDescription</key>
+          \t<string>Camera is used to scan vehicle number plates and QR tokens.</string>
+          \t<key>NSFaceIDUsageDescription</key>
+          \t<string>Face ID is used for secure operator authentication.</string>'''
+              if 'NSCameraUsageDescription' not in txt:
+                  txt = txt.replace('<dict>', '<dict>\n' + ios_keys, 1)
+                  open(plist, 'w').write(txt)
+          EOF
+
+      - name: Save Generated Project to Repo
+        run: |
+          git config user.name "Muhammad Umair Sattar Bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add .
+          git diff --cached --quiet || git commit -m "Auto-initialize SmartPark Pro Flutter structure"
+          git push
