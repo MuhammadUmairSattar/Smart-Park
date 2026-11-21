@@ -41,7 +41,7 @@ jobs:
             local_auth: ^3.0.2
             google_mlkit_text_recognition: ^0.17.1
             image_picker: ^1.1.2
-            mobile_scanner: ^6.0.2
+            mobile_scanner: ^7.4.3
             barcode_widget: ^2.0.4
             pdf: ^3.11.1
             printing: ^5.13.3
@@ -458,4 +458,507 @@ jobs:
                       pw.Text('Zone: ${ticket.locationSlot}'),
                       pw.Text('Entry: $entryStr'),
                       pw.Text('Exit: $exitStr'),
-                      pw.SizedB
+                      cat << 'END_DASH' > lib/features/parking/dashboard_screen.dart
+          import 'package:flutter/material.dart';
+          import 'package:flutter/services.dart';
+          import 'package:flutter_riverpod/flutter_riverpod.dart';
+          import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+          import 'package:image_picker/image_picker.dart';
+          import 'package:intl/intl.dart';
+          import 'package:mobile_scanner/mobile_scanner.dart';
+          import '../../core/app_core.dart';
+          import 'parking_logic.dart';
+          import 'receipt_screen.dart';
+
+          class ProDashboardScreen extends ConsumerStatefulWidget {
+            const ProDashboardScreen({super.key});
+            @override
+            ConsumerState<ProDashboardScreen> createState() => _ProDashboardScreenState();
+          }
+
+          class _ProDashboardScreenState extends ConsumerState<ProDashboardScreen> with SingleTickerProviderStateMixin {
+            late TabController _tabController;
+            VehicleType _selectedType = VehicleType.car;
+            final _plateCtrl = TextEditingController();
+            final _ownerCtrl = TextEditingController();
+            final _slotCtrl = TextEditingController(text: 'VIP Zone A - Bay 01');
+            bool _isScanning = false;
+
+            @override
+            void initState() {
+              super.initState();
+              _tabController = TabController(length: 2, vsync: this);
+            }
+
+            Future<void> _scanPlateWithAI() async {
+              HapticFeedback.mediumImpact();
+              final img = await ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 90);
+              if (img == null) return;
+              setState(() => _isScanning = true);
+              try {
+                final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
+                final result = await recognizer.processImage(InputImage.fromFilePath(img.path));
+                await recognizer.close();
+                final raw = result.text.replaceAll('\n', ' ').toUpperCase();
+                final match = RegExp(r'[A-Z]{1,4}[-\s]?\d{1,5}').firstMatch(raw);
+                setState(() => _plateCtrl.text = match != null ? match.group(0)! : raw.trim());
+              } catch (e) {
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('OCR Error: $e')));
+              } finally {
+                if (mounted) setState(() => _isScanning = false);
+              }
+            }
+
+            Future<void> _issueToken() async {
+              if (_plateCtrl.text.trim().isEmpty || _ownerCtrl.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(backgroundColor: AppTheme.danger, content: Text('Enter Plate Number & Owner Name!')));
+                return;
+              }
+              HapticFeedback.selectionClick();
+              final ticket = await ref.read(parkingProvider.notifier).issueTicket(
+                    type: _selectedType,
+                    plateNumber: _plateCtrl.text,
+                    ownerName: _ownerCtrl.text,
+                    slot: _slotCtrl.text,
+                  );
+              _plateCtrl.clear();
+              _ownerCtrl.clear();
+              if (mounted) Navigator.push(context, MaterialPageRoute(builder: (_) => VipReceiptScreen(ticket: ticket)));
+            }
+
+            @override
+            Widget build(BuildContext context) {
+              final state = ref.watch(parkingProvider);
+              return Scaffold(
+                appBar: AppBar(
+                  backgroundColor: AppTheme.bgSurface,
+                  title: Text(AppLocalizations.tr('app_name'), style: const TextStyle(color: AppTheme.goldAccent, fontWeight: FontWeight.w800, fontSize: 17)),
+                  actions: [
+                    IconButton(
+                      tooltip: 'QR Exit Scanner',
+                      icon: const Icon(Icons.qr_code_scanner_rounded, color: AppTheme.emerald),
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QrExitScannerScreen())),
+                    ),
+                    IconButton(
+                      icon: Text(AppLocalizations.currentLanguage.value.flag, style: const TextStyle(fontSize: 20)),
+                      onPressed: () {
+                        final list = AppLocalizations.supportedLanguages;
+                        AppLocalizations.currentLanguage.value = list[(list.indexOf(AppLocalizations.currentLanguage.value) + 1) % 3];
+                      },
+                    ),
+                  ],
+                  bottom: TabBar(
+                    controller: _tabController,
+                    indicatorColor: AppTheme.goldAccent,
+                    labelColor: AppTheme.goldAccent,
+                    tabs: [
+                      const Tab(icon: Icon(Icons.add_circle_outline), text: 'New Entry'),
+                      Tab(icon: const Icon(Icons.directions_car_filled_outlined), text: 'Active (${state.activeTickets.length})'),
+                    ],
+                  ),
+                ),
+                body: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      color: AppTheme.bgSurface,
+                      child: Row(
+                        children: [
+                          _kpi('Revenue', 'Rs. ${state.todayRevenue.toInt()}', AppTheme.emerald, Icons.trending_up),
+                          const SizedBox(width: 12),
+                          _kpi('Parked', '${state.activeTickets.length} Units', AppTheme.goldAccent, Icons.local_parking),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [_buildEntryTab(state.isLoading), _buildActiveTab(state.activeTickets)],
+                      ),
+                    ),
+                    const DeveloperWatermark(),
+                  ],
+                ),
+              );
+            }
+
+            Widget _kpi(String t, String v, Color c, IconData i) => Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: AppTheme.bgCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0x14FFFFFF))),
+                    child: Row(children: [
+                      CircleAvatar(backgroundColor: c.withValues(alpha: 0.15), child: Icon(i, color: c, size: 18)),
+                      const SizedBox(width: 10),
+                      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(t, style: const TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                        Text(v, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      ]),
+                    ]),
+                  ),
+                );
+
+            Widget _buildEntryTab(bool loading) => SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(AppLocalizations.tr('select_vehicle'), style: const TextStyle(color: AppTheme.textMuted, fontSize: 12, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 10),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 0.85),
+                        itemCount: VehicleType.values.length,
+                        itemBuilder: (ctx, i) {
+                          final type = VehicleType.values[i];
+                          final sel = type == _selectedType;
+                          return GestureDetector(
+                            onTap: () => setState(() => _selectedType = type),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              decoration: BoxDecoration(
+                                color: sel ? AppTheme.goldAccent : AppTheme.bgCard,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: sel ? AppTheme.goldLight : const Color(0x14FFFFFF)),
+                              ),
+                              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                                Icon(type.icon, color: sel ? Colors.black : AppTheme.goldAccent, size: 26),
+                                const SizedBox(height: 4),
+                                Text(AppLocalizations.tr(type.labelKey), style: TextStyle(color: sel ? Colors.black : Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                                Text('Rs.${type.baseFee.toInt()}', style: TextStyle(color: sel ? Colors.black87 : AppTheme.textMuted, fontSize: 9.5)),
+                              ]),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 18),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.cyanAI, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                          onPressed: _isScanning ? null : _scanPlateWithAI,
+                          icon: _isScanning ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.document_scanner_rounded),
+                          label: Text(AppLocalizations.tr('scan_plate'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(controller: _plateCtrl, textCapitalization: TextCapitalization.characters, decoration: InputDecoration(labelText: AppLocalizations.tr('plate_no'), prefixIcon: const Icon(Icons.pin, color: AppTheme.goldAccent))),
+                      const SizedBox(height: 12),
+                      TextField(controller: _ownerCtrl, decoration: InputDecoration(labelText: AppLocalizations.tr('owner_name'), prefixIcon: const Icon(Icons.person, color: AppTheme.goldAccent))),
+                      const SizedBox(height: 12),
+                      TextField(controller: _slotCtrl, decoration: InputDecoration(labelText: AppLocalizations.tr('location'), prefixIcon: const Icon(Icons.location_on, color: AppTheme.goldAccent))),
+                      const SizedBox(height: 22),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 54,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.goldAccent, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                          onPressed: loading ? null : _issueToken,
+                          child: Text(AppLocalizations.tr('generate_token'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+
+            Widget _buildActiveTab(List<ParkingTicket> list) {
+              if (list.isEmpty) return const Center(child: Text('No active vehicles parked.', style: TextStyle(color: AppTheme.textMuted)));
+              return ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: list.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                itemBuilder: (ctx, i) {
+                  final t = list[i];
+                  return Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(color: AppTheme.bgCard, borderRadius: BorderRadius.circular(14)),
+                    child: Row(children: [
+                      CircleAvatar(backgroundColor: const Color(0x26D4AF37), child: Icon(t.vehicleType.icon, color: AppTheme.goldAccent)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text('${t.plateNumber} • ${t.tokenNumber}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Text('${t.ownerName} | ${t.locationSlot}', style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                          Text(DateFormat('hh:mm a, dd MMM').format(t.entryTime), style: const TextStyle(color: AppTheme.emerald, fontSize: 11)),
+                        ]),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: AppTheme.emerald, foregroundColor: Colors.black),
+                        onPressed: () {
+                          final closed = ref.read(parkingProvider.notifier).checkOutTicket(t.tokenNumber);
+                          if (closed != null) Navigator.push(context, MaterialPageRoute(builder: (_) => VipReceiptScreen(ticket: closed)));
+                        },
+                        child: const Text('EXIT', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ]),
+                  );
+                },
+              );
+            }
+          }
+
+          class QrExitScannerScreen extends ConsumerStatefulWidget {
+            const QrExitScannerScreen({super.key});
+            @override
+            ConsumerState<QrExitScannerScreen> createState() => _QrExitScannerScreenState();
+          }
+
+          class _QrExitScannerScreenState extends ConsumerState<QrExitScannerScreen> {
+            bool _scanned = false;
+
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                appBar: AppBar(title: const Text('Scan QR Token for Exit')),
+                body: MobileScanner(onDetect: (capture) {
+                  if (_scanned || capture.barcodes.isEmpty) return;
+                  final code = capture.barcodes.first.rawValue;
+                  if (code == null) return;
+                  final tokenNo = code.split('|').first.trim();
+                  final ticket = ref.read(parkingProvider.notifier).checkOutTicket(tokenNo);
+                  if (ticket != null) {
+                    _scanned = true;
+                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => VipReceiptScreen(ticket: ticket)));
+                  }
+                }),
+              );
+            }
+          }
+          END_DASH
+         cat << 'END_AUTH' > lib/features/auth/auth_screen.dart
+          import 'package:flutter/material.dart';
+          import 'package:local_auth/local_auth.dart';
+          import '../../core/app_core.dart';
+          import '../parking/dashboard_screen.dart';
+
+          class AuthScreen extends StatefulWidget {
+            const AuthScreen({super.key});
+            @override
+            State<AuthScreen> createState() => _AuthScreenState();
+          }
+
+          class _AuthScreenState extends State<AuthScreen> {
+            final _emailCtrl = TextEditingController();
+            final _passCtrl = TextEditingController();
+            final _api = ApiService();
+            final _localAuth = LocalAuthentication();
+            bool _isLogin = true;
+            bool _loading = false;
+            bool _obscure = true;
+
+            Future<void> _biometricLogin() async {
+              try {
+                final supported = await _localAuth.isDeviceSupported();
+                if (!supported) return;
+                final ok = await _localAuth.authenticate(
+                  localizedReason: AppLocalizations.tr('biometric'),
+                  biometricOnly: false,
+                  persistAcrossBackgrounding: true,
+                );
+                if (ok && mounted) {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProDashboardScreen()));
+                }
+              } catch (e) {
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Auth: $e')));
+              }
+            }
+
+            Future<void> _submit() async {
+              if (_emailCtrl.text.isEmpty || _passCtrl.text.isEmpty) return;
+              setState(() => _loading = true);
+              final ok = await _api.authenticate(_emailCtrl.text, _passCtrl.text, isSignUp: !_isLogin);
+              setState(() => _loading = false);
+              if (ok && mounted) {
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProDashboardScreen()));
+              }
+            }
+
+            void _pickLanguage() {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: AppTheme.bgSurface,
+                builder: (_) => ListView.builder(
+                  itemCount: AppLocalizations.supportedLanguages.length,
+                  itemBuilder: (ctx, i) {
+                    final l = AppLocalizations.supportedLanguages[i];
+                    return ListTile(
+                      leading: Text(l.flag, style: const TextStyle(fontSize: 22)),
+                      title: Text(l.name),
+                      trailing: AppLocalizations.currentLanguage.value.code == l.code ? const Icon(Icons.check_circle, color: AppTheme.goldAccent) : null,
+                      onTap: () {
+                        AppLocalizations.currentLanguage.value = l;
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              );
+            }
+
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                body: SafeArea(
+                  child: Column(
+                    children: [
+                      Align(
+                        alignment: AlignmentDirectional.topEnd,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: ActionChip(
+                            avatar: Text(AppLocalizations.currentLanguage.value.flag),
+                            label: Text(AppLocalizations.currentLanguage.value.name.split(' ').first),
+                            onPressed: _pickLanguage,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(24),
+                            child: Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: AppTheme.bgCard,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(color: const Color(0x1FFFFFFF)),
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.shield_rounded, size: 60, color: AppTheme.goldAccent),
+                                  const SizedBox(height: 10),
+                                  Text(AppLocalizations.tr('app_name'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+                                  Text(AppLocalizations.tr('login_sub'), style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                                  const SizedBox(height: 24),
+                                  TextField(controller: _emailCtrl, decoration: InputDecoration(labelText: AppLocalizations.tr('email'), prefixIcon: const Icon(Icons.person_outline, color: AppTheme.goldAccent))),
+                                  const SizedBox(height: 14),
+                                  TextField(
+                                    controller: _passCtrl,
+                                    obscureText: _obscure,
+                                    decoration: InputDecoration(
+                                      labelText: AppLocalizations.tr('password'),
+                                      prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.goldAccent),
+                                      suffixIcon: IconButton(icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off), onPressed: () => setState(() => _obscure = !_obscure)),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 22),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 52,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.goldAccent, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                                      onPressed: _loading ? null : _submit,
+                                      child: _loading ? const CircularProgressIndicator(color: Colors.black) : Text(_isLogin ? AppLocalizations.tr('login_btn') : AppLocalizations.tr('signup_btn'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(foregroundColor: AppTheme.goldAccent, side: const BorderSide(color: AppTheme.goldAccent), minimumSize: const Size(double.infinity, 48), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                                    onPressed: _biometricLogin,
+                                    icon: const Icon(Icons.fingerprint),
+                                    label: Text(AppLocalizations.tr('biometric')),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => setState(() => _isLogin = !_isLogin),
+                                    child: Text(_isLogin ? AppLocalizations.tr('signup_btn') : AppLocalizations.tr('login_btn')),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const DeveloperWatermark(),
+                    ],
+                  ),
+                ),
+              );
+            }
+          }
+          END_AUTH
+
+          cat << 'END_MAIN' > lib/main.dart
+          import 'package:flutter/material.dart';
+          import 'package:flutter_localizations/flutter_localizations.dart';
+          import 'package:flutter_riverpod/flutter_riverpod.dart';
+          import 'core/app_core.dart';
+          import 'features/auth/auth_screen.dart';
+
+          void main() {
+            WidgetsFlutterBinding.ensureInitialized();
+            runApp(const ProviderScope(child: SmartParkEnterpriseApp()));
+          }
+
+          class SmartParkEnterpriseApp extends StatelessWidget {
+            const SmartParkEnterpriseApp({super.key});
+
+            @override
+            Widget build(BuildContext context) {
+              return ValueListenableBuilder<LanguageModel>(
+                valueListenable: AppLocalizations.currentLanguage,
+                builder: (context, lang, _) {
+                  return MaterialApp(
+                    debugShowCheckedModeBanner: false,
+                    title: 'SmartPark Pro AI',
+                    theme: AppTheme.darkLuxuryTheme,
+                    localizationsDelegates: const [
+                      GlobalMaterialLocalizations.delegate,
+                      GlobalWidgetsLocalizations.delegate,
+                      GlobalCupertinoLocalizations.delegate,
+                    ],
+                    supportedLocales: AppLocalizations.supportedLanguages.map((e) => Locale(e.code)),
+                    locale: Locale(lang.code),
+                    builder: (context, child) => Directionality(
+                      textDirection: lang.isRtl ? TextDirection.rtl : TextDirection.ltr,
+                      child: child!,
+                    ),
+                    home: const AuthScreen(),
+                  );
+                },
+              );
+            }
+          }
+          END_MAIN
+
+          python3 - << 'END_PY'
+          import glob, os
+          for p in glob.glob('android/app/src/main/kotlin/**/MainActivity.kt', recursive=True):
+              t = open(p).read()
+              if 'FlutterFragmentActivity' not in t:
+                  t = t.replace('FlutterActivity', 'FlutterFragmentActivity')
+                  open(p, 'w').write(t)
+          for p in ['android/app/build.gradle.kts', 'android/app/build.gradle']:
+              if os.path.exists(p):
+                  t = open(p).read()
+                  t = t.replace('minSdk = 23', 'minSdk = 24').replace('minSdk = flutter.minSdkVersion', 'minSdk = 24')
+                  t = t.replace('minSdkVersion 23', 'minSdkVersion 24').replace('minSdkVersion flutter.minSdkVersion', 'minSdkVersion 24')
+                  open(p, 'w').write(t)
+          END_PY
+
+      - name: Save App Code to Repository
+        run: |
+          git config user.name "Muhammad Umair Sattar Bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add pubspec.yaml lib android
+          git diff --cached --quiet || git commit -m "Add SmartPark Pro Enterprise source code"
+          git push
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Packages
+        run: flutter pub get
+
+      - name: Build Android Release APK
+        run: flutter build apk --release
+
+      - name: Upload APK for Download
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartPark-Pro-APK
+          path: build/app/outputs/flutter-apk/app-release.apk 
