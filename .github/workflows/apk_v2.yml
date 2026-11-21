@@ -1,4 +1,4 @@
-name: Build SmartPark v2 APK
+name: Build SmartPark Pro v2 APK
 
 on:
   push:
@@ -30,4 +30,14 @@ jobs:
             sed -i 's/android {/android {\n    lint {\n        checkReleaseBuilds = false\n        abortOnError = false\n    }/' android/app/build.gradle.kts
           fi
           if [ -f android/app/build.gradle ] && ! grep -q "proguard-rules.pro" android/app/build.gradle; then
-            sed -i 's/release {/release {\n            proguardFiles getDefaultProguardFile("proguard-android-
+            sed -i 's/release {/release {\n            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"/' android/app/build.gradle
+          fi
+          if [ -f android/app/build.gradle ] && ! grep -q "checkReleaseBuilds" android/app/build.gradle; then
+            sed -i 's/android {/android {\n    lint {\n        checkReleaseBuilds false\n        abortOnError false\n    }/' android/app/build.gradle
+          fi
+      - run: sed -i 's/name: Smart Park$/name: smart_park_pro/' build_app.sh || true
+      - run: bash build_app.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SmartPark-Pro-v2-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
