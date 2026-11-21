@@ -3,7 +3,7 @@ name: Build SmartPark v2 APK
 on:
   push:
     paths:
-      - 'build_v2.sh'
+      - 'build_app.sh'
       - '.github/workflows/apk_v2.yml'
   workflow_dispatch:
 
@@ -35,7 +35,8 @@ jobs:
           if [ -f android/app/build.gradle ] && ! grep -q "checkReleaseBuilds" android/app/build.gradle; then
             sed -i 's/android {/android {\n    lint {\n        checkReleaseBuilds false\n        abortOnError false\n    }/' android/app/build.gradle
           fi
-      - run: bash build_v2.sh
+      - run: sed -i 's/name: Smart Park$/name: smart_park_pro/' build_app.sh || true
+      - run: bash build_app.sh
       - uses: actions/upload-artifact@v4
         with:
           name: SmartPark-v2-APK
