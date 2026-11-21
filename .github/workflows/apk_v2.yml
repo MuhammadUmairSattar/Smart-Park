@@ -35,7 +35,7 @@ jobs:
           if [ -f android/app/build.gradle ] && ! grep -q "checkReleaseBuilds" android/app/build.gradle; then
             sed -i 's/android {/android {\n    lint {\n        checkReleaseBuilds false\n        abortOnError false\n    }/' android/app/build.gradle
           fi
-      - run: sed -i 's/name: Smart Park$/name: smart_park_pro/' build_app.sh || true
+          - run: sed -i 's/Smart Park$/smart_park_pro/' build_app.sh || true
       - run: bash build_app.sh
       - uses: actions/upload-artifact@v4
         with:
