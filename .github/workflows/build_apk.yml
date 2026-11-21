@@ -1100,7 +1100,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
   }
 }
 END_SETTINGS
-
 cat << 'END_AUTH' > lib/features/auth/auth_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1259,6 +1258,53 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 }
 END_AUTH
+
+cat << 'END_MAIN' > lib/main.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'core/app_core.dart';
+import 'features/auth/auth_screen.dart';
+import 'features/parking/parking_logic.dart';
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const ProviderScope(child: SmartParkEnterpriseApp()));
+}
+
+class SmartParkEnterpriseApp extends ConsumerWidget {
+  const SmartParkEnterpriseApp({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final themeData = settings.activeTheme.toThemeData(settings.activeStyle);
+
+    return ValueListenableBuilder<LanguageModel>(
+      valueListenable: AppLocalizations.currentLanguage,
+      builder: (context, lang, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: settings.businessName,
+          theme: themeData,
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLanguages.map((e) => Locale(e.code)),
+          locale: Locale(lang.code),
+          builder: (context, child) => Directionality(
+            textDirection: lang.isRtl ? TextDirection.rtl : TextDirection.ltr,
+            child: child!,
+          ),
+          home: const AuthScreen(),
+        );
+      },
+    );
+  }
+}
+END_MAIN
 cat << 'END_DASH' > lib/features/parking/dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1573,53 +1619,6 @@ class _QrExitScannerScreenState extends ConsumerState<QrExitScannerScreen> {
   }
 }
 END_DASH
-
-cat << 'END_MAIN' > lib/main.dart
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'core/app_core.dart';
-import 'features/auth/auth_screen.dart';
-import 'features/parking/parking_logic.dart';
-
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ProviderScope(child: SmartParkEnterpriseApp()));
-}
-
-class SmartParkEnterpriseApp extends ConsumerWidget {
-  const SmartParkEnterpriseApp({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
-    final themeData = settings.activeTheme.toThemeData(settings.activeStyle);
-
-    return ValueListenableBuilder<LanguageModel>(
-      valueListenable: AppLocalizations.currentLanguage,
-      builder: (context, lang, _) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: settings.businessName,
-          theme: themeData,
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.supportedLanguages.map((e) => Locale(e.code)),
-          locale: Locale(lang.code),
-          builder: (context, child) => Directionality(
-            textDirection: lang.isRtl ? TextDirection.rtl : TextDirection.ltr,
-            child: child!,
-          ),
-          home: const AuthScreen(),
-        );
-      },
-    );
-  }
-}
-END_MAIN
 
 grep -rl "FlutterActivity" android/app/src/main/kotlin | xargs -r sed -i 's/FlutterActivity/FlutterFragmentActivity/g' || true
 [ -f android/app/build.gradle.kts ] && sed -i 's/minSdk = 23/minSdk = 24/g; s/minSdk = flutter.minSdkVersion/minSdk = 24/g' android/app/build.gradle.kts || true
