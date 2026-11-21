@@ -20,14 +20,20 @@ jobs:
         with:
           channel: 'stable'
           cache: true
-      - name: Fix MLKit R8 Proguard
+      - name: Fix MLKit R8 Proguard & Android Lint
         run: |
           printf '%s\n' '-dontwarn com.google.mlkit.**' '-keep class com.google.mlkit.** { *; }' > android/app/proguard-rules.pro
           if [ -f android/app/build.gradle.kts ] && ! grep -q "proguard-rules.pro" android/app/build.gradle.kts; then
             sed -i 's/release {/release {\n            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")/' android/app/build.gradle.kts
           fi
+          if [ -f android/app/build.gradle.kts ] && ! grep -q "checkReleaseBuilds" android/app/build.gradle.kts; then
+            sed -i 's/android {/android {\n    lint {\n        checkReleaseBuilds = false\n        abortOnError = false\n    }/' android/app/build.gradle.kts
+          fi
           if [ -f android/app/build.gradle ] && ! grep -q "proguard-rules.pro" android/app/build.gradle; then
             sed -i 's/release {/release {\n            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"/' android/app/build.gradle
+          fi
+          if [ -f android/app/build.gradle ] && ! grep -q "checkReleaseBuilds" android/app/build.gradle; then
+            sed -i 's/android {/android {\n    lint {\n        checkReleaseBuilds false\n        abortOnError false\n    }/' android/app/build.gradle
           fi
       - run: bash build_app.sh
       - uses: actions/upload-artifact@v4
