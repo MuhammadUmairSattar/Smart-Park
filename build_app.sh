@@ -2,7 +2,7 @@ set -e
 mkdir -p lib/core lib/features/auth lib/features/parking
 
 cat << 'END_PUBSPEC' > pubspec.yaml
-name: Smart Park
+name: SmartPark
 description: SmartPark Parking & Token Management System
 publish_to: 'none'
 version: 2.0.0+2
