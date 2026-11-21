@@ -1,4 +1,4 @@
-name: Build SmartPark Pro v2 APK
+name: Build SmartPark v2 APK
 
 on:
   push:
