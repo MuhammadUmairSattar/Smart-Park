@@ -1,51 +1,27 @@
-name: Build SmartPark APK
+name: Build SmartPark Pro APK
 
 on:
   push:
-    branches: [ main ]
     paths:
-      - 'lib/**'
-      - 'pubspec.yaml'
+      - 'build_app.sh'
       - '.github/workflows/build_apk.yml'
   workflow_dispatch:
 
 jobs:
-  build:
+  build-app:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
-
-      - name: Configure Biometric Activity & MinSDK 24
-        run: |
-          python3 - << 'EOF'
-          import glob, os
-          for p in glob.glob('android/app/src/main/kotlin/**/MainActivity.kt', recursive=True):
-              t = open(p).read()
-              t = t.replace('io.flutter.embedding.android.FlutterActivity', 'io.flutter.embedding.android.FlutterFragmentActivity')
-              t = t.replace(': FlutterActivity()', ': FlutterFragmentActivity()')
-              open(p, 'w').write(t)
-          for p in ['android/app/build.gradle.kts', 'android/app/build.gradle']:
-              if os.path.exists(p):
-                  t = open(p).read()
-                  t = t.replace('minSdk = 23', 'minSdk = 24').replace('minSdkVersion 23', 'minSdkVersion 24')
-                  open(p, 'w').write(t)
-          EOF
-
-      - run: flutter pub get
-      - run: flutter build apk --release
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - run: bash build_app.sh
+      - uses: actions/upload-artifact@v4
         with:
           name: SmartPark-Pro-APK
           path: build/app/outputs/flutter-apk/app-release.apk
