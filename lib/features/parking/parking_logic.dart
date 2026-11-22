@@ -501,7 +501,7 @@ class ParkingTicket {
 
   factory ParkingTicket.fromDbMap(Map<String, dynamic> m) => ParkingTicket(
         tokenNumber: m['token_number'] as String,
-        branch_id: m['branch_id'] as String,
+        branchId: m['branch_id'] as String,
         businessName: m['business_name'] as String,
         currency: m['currency'] as String,
         vehicleType: VehicleType.values.firstWhere(
