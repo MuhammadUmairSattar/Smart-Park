@@ -58,6 +58,8 @@ configure<ApplicationExtension> {
             }
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
+            } else if (project.hasProperty("ciUnsigned")) {
+                signingConfig = signingConfigs.getByName("debug")
             }
             isMinifyEnabled = true
             isShrinkResources = true
