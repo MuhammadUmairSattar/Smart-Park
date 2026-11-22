@@ -335,7 +335,7 @@ class ApiService {
         '/auth/login',
         data: {'email': email.trim(), 'password': password},
       );
-      return _persistAuthResponse(res.data ?? const {}, fallbackEmail: email);
+      return await _persistAuthResponse(res.data ?? const {}, fallbackEmail: email);
     } on DioException catch (e) {
       throw _mapDioError(e);
     }
@@ -357,7 +357,7 @@ class ApiService {
           'branch_id': branchId.trim(),
         },
       );
-      return _persistAuthResponse(res.data ?? const {}, fallbackEmail: email);
+      return await _persistAuthResponse(res.data ?? const {}, fallbackEmail: email);
     } on DioException catch (e) {
       throw _mapDioError(e);
     }
