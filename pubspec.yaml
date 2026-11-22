@@ -1,4 +1,4 @@
-name: SmartPark
+name: smart_park_pro
 description: Production SmartPark Parking, ANPR & SaaS Management Suite.
 publish_to: 'none'
 version: 3.0.0+3
