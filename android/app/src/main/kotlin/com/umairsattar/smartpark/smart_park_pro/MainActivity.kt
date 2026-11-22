@@ -1,5 +1,5 @@
 package com.umairsattar.smartpark.smart_park_pro
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+class MainActivity : FlutterFragmentActivity()
