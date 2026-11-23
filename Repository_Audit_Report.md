@@ -1,57 +1,88 @@
-# Repository Audit Report
+# Smart-Park Repository Audit Report
 
 **Repository:** [MuhammadUmairSattar/Smart-Park](https://github.com/MuhammadUmairSattar/Smart-Park)  
 **Repository ID:** `1465552909`  
-**Audit date:** 2026-11-22  
-**Scope:** Read-only review of the current `main` branch at commit `a4dd2b25ca532fa602f081ccb333e3f2ef9c10b0`  
-**Method:** GitHub metadata/API, repository tree, representative source review, manifest and history inspection. Application code was **not executed**.
+**Audit refreshed:** 2026-11-23  
+**Current branch:** `main`  
+**Current repository commit observed:** `6b0909c2060df4cb2f7080438d7f2ef063cb1f16`  
+**Application source snapshot reviewed:** `a4dd2b25ca532fa602f081ccb333e3f2ef9c10b0`  
+**Audit type:** Read-only inspection; no application code executed.
+
+> This replaces the previous audit text. It corrects the workflow-path assessment, distinguishes the latest repository commit from the latest application-source commit, and states clearly where exact LOC and visibility-history facts cannot be established from the available API evidence.
 
 ## Executive Summary
 
-Smart-Park is a compact Flutter 3.4+ application for parking operations, with a real local SQLite/offline model, JWT REST clients, HMAC-signed QR tickets, thermal/PDF reporting, authentication, theme and localization features, and both Express/PostgreSQL and Cloudflare Workers/D1 backend implementations. The repository is **public** at audit time and is MIT licensed. GitHub attributes 72 contributions to `MuhammadUmairSattar` and one to the `bot` account.
+Smart-Park is a Flutter/Dart parking-operations application with offline SQLite ticket handling, user authentication and refresh sessions, biometric unlock, HMAC-signed QR tickets, VIP-pass support, tariff calculations, reporting, and two backend implementations: Express/PostgreSQL and Cloudflare Workers/D1. The repository has standard Flutter platform scaffolding and a small set of tests. The code review confirms several meaningful features are implemented; it does not prove that the product is deployed or production-ready.
 
-The repository contains meaningful implemented functionality, not merely a scaffold. However, the README's broad feature wording is broader than the verified implementation: it says 22+ languages, but the code currently exposes only English, Urdu, and Arabic. It says 50 themes; the theme implementation must be verified by the size of the preset list, while the README and code can be considered partially evidenced. OCR, local storage, sync queue, auth, and signed QR behavior are implemented in source. Actual ANPR accuracy, biometric behavior, real-cloud operation, and iOS/Android builds cannot be verified because code was not executed and no build result is available.
+The repository is **public** as of this audit and declares the MIT license. The README advertises 22+ languages, while the inspected localization code defines three (English, Urdu, and Arabic). This is a material documentation mismatch. The current report commit is unsigned/unverified in GitHub's commit response; that status alone does not establish that the commit or content is fraudulent.
 
-The principal risks are default/fallback JWT and QR secrets, wildcard CORS on the Cloudflare backend, response leakage of server exceptions, lack of authorization checks for cross-operator ticket/checkout operations, no database migration history, a possible CI workflow placement issue (`github/` rather than `.github/`), and weak build readiness evidence. The Express backend also defaults to ephemeral memory storage when `DATABASE_URL` is absent, making it unsuitable as a production backend without configuration.
+Security and release concerns include embedded development fallback secrets, broad CORS settings, absent visible branch/operator ownership checks on ticket actions, possible diagnostic detail leakage, a non-durable Express fallback mode, and no verified test/build/deployment results. There is a correctly located GitHub Actions workflow at `.github/workflows/ci_build.yml`; a similarly named duplicate exists at `github/workflows/ci_build.yml`, which is not the standard Actions discovery path.
 
-**Overall recommendation:** **Conditional hold for production; suitable as a public prototype/demonstration repository with substantial work needed before production deployment.**
+**Recommendation:** Treat the repository as a prototype or controlled staging project until secret handling, authorization, backend deployment, and actual build/test verification are addressed. The report does not claim exact raw, eligible, excluded, or original LOC because no local clone/counting tooling was available.
 
-## Repository and Visibility Facts
+## 1. Scope, Sources, and Confidence
 
-| Item | Verified result |
-|---|---|
-| Repository | `MuhammadUmairSattar/Smart-Park` |
-| Visibility now | **Public** (`private: false`, `visibility: public`) |
-| License | MIT; copyright (c) 2026 Muhammad Umair Sattar |
-| Default branch | `main` |
-| Repository size | 456 KB reported by GitHub |
-| Primary language | Dart |
-| Fork | No |
-| Archived / disabled | No |
-| Created / pushed metadata | GitHub reported repository created 2 days before audit; latest pushed 2026-11-22 13:48:58Z |
-| Visibility history | **Not verifiable from available metadata**. GitHub API exposes the current visibility but no public/private transition event or exact prior-public date. |
+Evidence examined in the prior and current audit context:
 
-There is no public/private transition evidence in the current API response, commit history, or repository metadata available to this audit. A repository may have been private earlier, but this cannot be confirmed or timed from the available evidence.
+- GitHub repository metadata and language byte statistics
+- Recursive tree of `main`
+- `README.md`, `LICENSE`, `pubspec.yaml`, CI workflow
+- Representative application, test, and backend source files
+- Commit metadata for the repository's first application commit, latest application commit, and current report commit
 
-## Metrics Summary
+**Not performed:** application execution, dependency installation, local LOC scan, static-analysis run, vulnerability scanner, source-similarity scan, device build, backend deployment, or penetration test. Security observations are source-review findings, not exploit demonstrations.
 
-GitHub's current tree contains **228 tracked entries** in the recursive tree response. The response is itself a mixed inventory of directories and files, and therefore is not a direct count of files. From the returned tree, **184 blob/file entries** and **44 tree/directory entries** are present. This is a structural count, not a LOC measurement.
+## 2. Repository Facts and Visibility
 
-| Metric | Result | Confidence / notes |
+| Item | Finding | Status |
+|---|---|---|
+| Repository | `MuhammadUmairSattar/Smart-Park` | Verified |
+| Repository ID | `1465552909` | Verified |
+| Current visibility | **Public** (`private: false`, `visibility: public`) | Verified from current GitHub metadata |
+| Default branch | `main` | Verified |
+| License | MIT License | Verified in `LICENSE` and repository metadata |
+| GitHub primary language | Dart | Verified |
+| Fork / archived / disabled | Not a fork; not archived; not disabled | Verified |
+| GitHub-reported repository size | 467 KB on refreshed metadata | Verified; GitHub's repository-size field, not total checkout size |
+| Last pushed time in refreshed metadata | 2026-11-23 03:41:23Z | Verified |
+| Visibility history | No transition record was available in the evidence reviewed | **Unverifiable** |
+
+### Public/private history
+
+The repository is public now. The available repository metadata and commit list do not show a public/private transition audit event. There is no sufficient evidence to say whether it was previously private or to provide an exact date on which a visibility change occurred. Current public visibility must not be presented as proof of continuous public visibility.
+
+## 3. Repository Size, File Inventory, and LOC
+
+The recursive tree response examined during the audit reported **184 blob/file entries** and **44 tree/directory entries** (228 total entries). This is the inventory at the inspected tree snapshot; report-file changes can alter the current count. The tree inventory includes platform setup, configs, tests, assets, and generated files, not just authored source.
+
+| Metric | Result | Interpretation |
 |---|---:|---|
-| Total tracked repository entries | 228 | Verified by recursive tree inventory: 184 files + 44 directories |
-| Raw LOC | Not programmatically counted in this read-only API audit | GitHub API did not return local filesystem/cloc facilities; metrics below are not falsely asserted |
-| Eligible original authored source LOC | Not precisely measurable from API-only evidence | Requires a local clone and source classification/counting pass |
-| Verified original LOC | Not precisely measurable from API-only evidence | Originality is at least partially supported by the repository's own history, but third-party/generated/status classification requires local inventory |
-| Generated/platform scaffolding LOC | Excluded, but not counted precisely | Flutter/Xcode/CMake/Gradle generated scaffolding and templates |
-| Localization LOC | Excluded from “original business logic” LOC | 3 verified languages in `AppLocalizations` |
-| Dependency/vendor LOC | 0 visible tracked dependency directories | No `node_modules`, `.dart_tool`, `Pods`, or vendor directory in the recursive tree |
+| Tracked file entries at inspected source snapshot | 184 | Recursive-tree blob count; not source-only |
+| Directory entries at inspected source snapshot | 44 | Recursive-tree tree count |
+| Total tree entries | 228 | Files plus directories |
+| Raw LOC | Not counted | Exact count requires local checkout or a counting service/tool |
+| Eligible authored source LOC | Not counted | Must exclude templates, generated files, localization, assets, and third-party material |
+| Excluded LOC | Not counted | Same limitation; exclusions are identified qualitatively below |
+| Verified original LOC | Not counted | Requires content-level provenance and similarity review |
 
-### Language-wise GitHub Composition
+### Why LOC is not reported as a number
 
-GitHub language-byte data reports:
+GitHub's language percentages and byte totals are not LOC. The available tools provided file contents and tree metadata but did not provide a local shell, `cloc`/`tokei`, or a reliable full-repository line-count operation. Supplying numerical raw, eligible, excluded, or verified-original LOC would therefore be unsupported. A precise follow-up requires a local checkout, a documented extension/path exclusion list, and a provenance review. This is a limitation of the evidence, not a claim that the source is absent.
 
-| Language | Bytes | Approximate share |
+### Candidate source inventory for a local LOC pass
+
+- **Dart application and tests:** `lib/main.dart`, `lib/core/app_core.dart`, `lib/core/themes.dart`, `lib/features/auth/auth_screen.dart`, `lib/features/parking/parking_logic.dart`, `lib/features/parking/dashboard_screen.dart`, `lib/features/parking/receipt_screen.dart`, `lib/features/parking/settings_screen.dart`, `test/widget_test.dart`.
+- **JavaScript backends:** `backend/server.js`, `backend_cf/src/index.js`.
+- **Kotlin:** `android/app/src/main/kotlin/com/umairsattar/smartpark/smart_park_pro/MainActivity.kt`.
+- **Swift / Objective-C:** iOS and macOS platform glue; much of this is Flutter-generated scaffolding and should not automatically be counted as original app logic.
+- **C/C++/CMake:** desktop platform runners and generated plugin registration/build integration; classify generated registrants separately from handwritten runner code.
+- **Configuration:** Gradle Kotlin DSL, CMake, Xcode project, Wrangler, and Actions YAML. Report separately from application LOC.
+
+### Language-wise GitHub byte composition
+
+GitHub's language endpoint reported the following byte counts. These are not LOC and should not be read as originality percentages.
+
+| Language | Bytes | Approx. share |
 |---|---:|---:|
 | Dart | 145,460 | 67.6% |
 | C++ | 24,552 | 11.4% |
@@ -60,281 +91,229 @@ GitHub language-byte data reports:
 | HTML | 2,118 | 1.0% |
 | Swift | 2,044 | 0.9% |
 | C | 1,488 | 0.7% |
-| Objective-C | 38 | <0.1% |
 | Kotlin | 158 | <0.1% |
+| Objective-C | 38 | <0.1% |
 
-The initially supplied language composition is consistent with GitHub's byte data but omits C and Objective-C and has a small grouping difference for Swift/Other. No repository-local LOC tool was used, so per-language eligible/verified LOC must not be inferred from byte shares.
+This explains the supplied composition's rounding/grouping: GitHub separately reports C and Objective-C, while the user-provided summary grouped small categories as “Other.” The source inventory reviewed did not identify PHP, TypeScript, or Python source files; this is not a guarantee about uninspected/untracked content.
 
-## LOC Accounting Methodology
+## 4. Purpose and Stack
 
-A defensible LOC audit requires a local checkout and a counting pass that separates:
+### Purpose
 
-- **Raw LOC:** physical lines in every tracked text file.
-- **Eligible LOC:** authored source/configuration after removing dependencies, assets, generated platform scaffolding, lockfiles, localization-only content, and third-party copied code.
-- **Excluded LOC:** generated registrants, platform templates, lockfiles, binaries, assets, localization files, and vendor/dependency code.
-- **Verified original LOC:** eligible LOC whose authorship and originality can be supported by commit history and source inspection.
+A parking attendant/operator application for issuing parking tickets, recording check-in/check-out, calculating fees, supporting offline operation, and syncing ticket changes to a REST backend. The mobile app also includes configuration, localization, QR, and reporting features.
 
-This environment exposes GitHub file contents and tree metadata but not a shell or local clone, so it would be unsupported to claim exact LOC totals. The report therefore distinguishes repository metrics from unverifiable LOC estimates.
+### Stack
 
-### Preliminary eligible inventory
-
-The following are plausible eligible source areas, subject to local line counting:
-
-- Dart application source: `lib/main.dart`, `lib/core/app_core.dart`, `lib/core/themes.dart`, `lib/features/auth/auth_screen.dart`, `lib/features/parking/parking_logic.dart`, `lib/features/parking/dashboard_screen.dart`, `lib/features/parking/receipt_screen.dart`, `lib/features/parking/settings_screen.dart`, and `test/widget_test.dart`.
-- JavaScript backend: `backend/server.js` and `backend_cf/src/index.js`.
-- Kotlin: `android/app/src/main/kotlin/com/umairsattar/smartpark/smart_park_pro/MainActivity.kt`.
-- Swift: `ios/Runner/AppDelegate.swift`, `ios/Runner/SceneDelegate.swift`, `ios/Runner/Runner-Bridging-Header.h`, and macOS sources.
-- C++: platform runner sources and generated plugin registrants, with the latter classified generated/excluded.
-- Build/configuration: Android Gradle Kotlin DSL, CMake, Xcode project, and CI manifests; eligible as configuration, not application source LOC.
-
-Generated or template-heavy areas include `android/`, `ios/`, `linux/`, `macos/`, `windows/`, `web/`, and generated Flutter registrants. Some Android/iOS/macOS files are Flutter-generated template code and should be excluded from verified authored source LOC unless a local diff proves custom work.
-
-## Project Purpose and Implemented Features
-
-### Verified implemented areas
-
-- **Offline-first parking records:** SQLite schema and CRUD for tickets, sync queue, and VIP passes are implemented in `lib/features/parking/parking_logic.dart`.
-- **Tariff calculation:** grace period, flat/base fee, hourly overtime, and VAT calculations are implemented in `ParkingTicket.calculateSubtotal()`/`calculateTotalFee()`.
-- **JWT authentication:** login, registration, refresh, persistent secure storage, 401 retry, and auto-login state are implemented in `lib/core/app_core.dart` and `lib/features/parking/parking_logic.dart`.
-- **Biometric unlock:** local_auth integration and secure-session unlock flow are implemented in `lib/features/auth/auth_screen.dart`.
-- **ANPR/OCR:** Google ML Kit text recognition and regional plate parsing are claimed in README and likely referenced by dashboard code. The exact dashboard implementation could not be fully counted, but package and code context support OCR integration rather than a placeholder-only UI.
-- **HMAC-signed QR tickets:** payload signing and constant-time verification are implemented in `lib/core/app_core.dart`; backend verification exists in both Express and Cloudflare implementations.
-- **VIP passes:** SQLite persistence and active-pass lookup are implemented.
-- **Offline sync:** a SQLite queue, connectivity listener, and background sync loops are implemented.
-- **CSV export:** implemented in `ParkingNotifier.buildCsvReport()`.
-- **PDF/thermal receipt:** packages and receipt-related source files are present; external printer behavior and output quality are not build-tested.
-- **Localization:** three concrete language models—English, Urdu, and Arabic—are implemented, with RTL handling.
-- **Backends:** a Node/Express/PostgreSQL implementation and a Cloudflare Workers/D1 implementation are present.
-- **Tests:** unit/widget tests cover fee, HMAC verification, SQLite persistence/sync queue, and auth validation in `test/widget_test.dart`.
-
-### Claim vs. implementation caveats
-
-- README says 22+ languages, but `AppLocalizations.supportedLanguages` contains exactly 3 entries.
-- README says 50 luxury themes. Theme preset implementation should be counted locally; README evidence alone is not sufficient.
-- README says real-time ANPR. The repository integrates OCR, but no evidence of live camera/performance testing, model tuning, or real-world accuracy was provided.
-- README says commercial SaaS/VIP/thermal features. Some are implemented, but there is no evidence of production hosting, merchant integration, payment processing, or deployment readiness.
-
-## Tech Stack
-
-| Area | Technology |
+| Component | Evidence in repository |
 |---|---|
-| Mobile/UI | Flutter/Dart 3.4+, Riverpod 2.6, Material |
-| State/data | SharedPreferences, FlutterSecureStorage, sqflite |
-| Networking | Dio, connectivity_plus |
-| Auth | JWT, refresh tokens, local_auth biometrics |
-| OCR | Google ML Kit text recognition |
-| QR | barcode_widget, mobile_scanner, HMAC-SHA256 |
-| Reporting | pdf, printing |
-| Node backend | Express, CORS, PostgreSQL `pg`, JWT, Node crypto |
-| Edge backend | Cloudflare Workers, D1 SQLite, Web Crypto API |
-| Platforms | Android, iOS, macOS, Linux, Windows, Web |
-| CI | GitHub Actions-style YAML, though located at `github/workflows/ci_build.yml` rather than `.github/workflows/` |
+| Flutter / Dart | `pubspec.yaml`, `lib/` |
+| State management | Riverpod (`flutter_riverpod`) |
+| HTTP | Dio |
+| Local persistence | SQLite (`sqflite`), SharedPreferences, FlutterSecureStorage |
+| Connectivity | `connectivity_plus` |
+| Biometrics | `local_auth` |
+| OCR | `google_mlkit_text_recognition` dependency and dashboard feature references |
+| QR | `mobile_scanner`, `barcode_widget`, app/backend HMAC routines |
+| Reports | `pdf`, `printing`, CSV generation |
+| Node backend | Express, PostgreSQL (`pg`), JWT, Node crypto |
+| Edge backend | Cloudflare Worker, D1, Web Crypto |
+| Platform projects | Android, iOS, macOS, Linux, Windows, Web |
 
-## Git History and Authenticity
+## 5. Implemented Features and Claim Checks
 
-### Commit history
+### Confirmed in source
 
-The repository has a dense, rapid commit history beginning on 2026-11-20 and continuing through 2026-11-22. GitHub's commit API shows all visible author identities as either `MuhammadUmairSattar` or `bot`, but commit verification status varies. The current latest commit is GitHub-verified.
+- **Application startup and providers:** `lib/main.dart` initializes localization, preferences, database and stored session.
+- **Authentication:** `ApiService` in `lib/core/app_core.dart` contains login, registration, refresh, secure token persistence, and Dio authorization/refresh behavior.
+- **Biometric unlock:** `lib/features/auth/auth_screen.dart` uses `local_auth` and a saved session.
+- **Local ticket and VIP persistence:** `ParkingDatabase` in `lib/features/parking/parking_logic.dart` defines `tickets`, `sync_queue`, and `vip_passes` tables and related operations.
+- **Offline sync:** `ParkingNotifier` listens to connectivity and sends queued ticket operations.
+- **Tariffs:** `ParkingTicket.calculateSubtotal()` and `calculateTotalFee()` calculate grace-period, base/hourly, and tax amounts.
+- **QR signing:** `QrCryptoService` builds/signs payloads and compares signatures in constant-time; tests cover tampering.
+- **CSV export:** `ParkingNotifier.buildCsvReport()` constructs report content.
+- **Tests:** `test/widget_test.dart` has fee, QR, local persistence/queue, and auth-validation tests.
+- **Two backend implementations:** `backend/server.js` and `backend_cf/src/index.js` implement auth and ticket routes.
 
-### First and latest commit
+### Claims not established as production behavior
 
-| Position | Author | GitHub username / ID | Profile | Commit | Date | Signature |
-|---|---|---|---|---|---|---|
-| **First visible commit** | MuhammadUmairSattar | `MuhammadUmairSattar` / `344566430` | [Profile](https://github.com/MuhammadUmairSattar) | [Initial commit `4eb5cbb299150ff1cc5c668fd682f4ba6610d327`](https://github.com/MuhammadUmairSattar/Smart-Park/commit/4eb5cbb299150ff1cc5c668fd682f4ba6610d327) | 2026-11-20 14:52:59Z | GitHub verified |
-| **Latest commit** | MuhammadUmairSattar | `MuhammadUmairSattar` / `344566430` | [Profile](https://github.com/MuhammadUmairSattar) | [Latest commit `a4dd2b25ca532fa602f081ccb333e3f2ef9c10b0`](https://github.com/MuhammadUmairSattar/Smart-Park/commit/a4dd2b25ca532fa602f081ccb333e3f2ef9c10b0) | 2026-11-22 13:48:57Z | GitHub verified |
+- README advertises **22+ languages**. `AppLocalizations.supportedLanguages` in `lib/core/app_core.dart` contains exactly three: English, Urdu, Arabic. No localization directory with 22+ translated locales appears in the reviewed tree.
+- README advertises 50 themes. Theme source exists, but this audit does not assert an exact preset count without recounting the full theme file.
+- OCR/ANPR source integration is not evidence of real-world plate recognition accuracy, “real-time” performance, or verified regional coverage.
+- PDF/printing packages and receipt source do not verify compatibility with a specific thermal printer/device.
+- An API client/backend implementation does not prove the configured external service is live or deployed.
+- VIP passes and branch settings in local source do not by themselves establish multi-tenant SaaS isolation or cloud administration.
 
-The commit page reports a commit author name of `MuhammadUmairSattar`, a GitHub-linked author account ID `344566430`, and the committer `GitHub` for normal web commits. These are distinct concepts: author is linked; committer can be GitHub's web-flow account. One historical commit, `59246f0d9e1c99ef46a1d203b3c97d0fa933d304`, is attributed to `bot` account ID `58210622`, name “Muhammad Umair Sattar Bot,” and is not reported as cryptographically verified.
+## 6. Build and CI Readiness
 
-An earlier audit report commit (`66b23a...`) is unverified and was made with the author's local committer identity. It was later deleted. This does not prove malicious activity; it is a normal GitHub verification gap for local unsigned or non-GPG/NACL-signed commits.
+### Corrected workflow assessment
 
-### Contributors
+The inspected recursive tree contains both:
 
-- `MuhammadUmairSattar` — 72 contributions.
-- `bot` — 1 contribution.
-- No other GitHub contributors are reported.
+- `.github/workflows/ci_build.yml` — standard GitHub Actions workflow location
+- `github/workflows/ci_build.yml` — duplicate under a nonstandard top-level directory
 
-## Code Originality and AI Indicators
+The `.github/workflows/ci_build.yml` file runs dependency retrieval, Flutter analysis, tests, and an Android APK build. Therefore, the earlier statement that the only CI file was in the wrong directory was incorrect. The duplicate `github/` path is not the standard discovery location. No Actions run/job result was retrieved, so workflow success and actual build readiness remain unverified.
 
-### Positive originality indicators
+### Build evidence
 
-- Commit history incrementally shows source files being created and refactored.
-- Repository-specific names, project branding, and database schema appear throughout source.
-- No third-party source directories or vendored dependency trees are present in the returned tree.
-- MIT license is explicitly declared.
+The manifests and platform files provide a plausible Flutter build setup. No command was run in this audit. The following remain **unverified**:
 
-### AI-generated code indicators
-
-The following are indicators, not proof:
-
-- Highly uniform commit cadence and detailed commit messages with repeated refactor wording.
-- Some files contain unusually complete, polished implementations for a very new repository.
-- README and code reuse the same project branding, feature phraseology, and security terminology.
-- One bot-authored commit indicates automated initialization.
-- A prior repository audit/report commit also indicates automated or AI-assisted repository maintenance.
-
-These signals are **consistent with AI-assisted or bot-assisted authoring**, but cannot establish that code was generated by AI or copied. No exact-source similarity scan was performed.
-
-### Ownership concerns
-
-- README and license claim 2026 copyright for Muhammad Umair Sattar, consistent with the owner identity.
-- MIT is permissive but is not legal proof of ownership of every dependency or copied template.
-- Flutter, Android, iOS, macOS, Linux, Windows, and web platform files contain generated template content owned or licensed under upstream framework terms.
-- Third-party package licenses are not separately included as a NOTICE or dependency inventory.
-- The README copyright statement is stronger than the MIT license's redistribution terms and could be clarified.
-
-## Copied Templates and Third-Party Code
-
-### Verified templates/generated content
-
-- Standard Flutter platform directories for Android, iOS, macOS, Linux, Windows, and web are present.
-- iOS LaunchImage and asset directories contain standard Flutter template README/assets.
-- Linux, Windows, and macOS runner files follow standard Flutter-generated layouts.
-- Android Gradle wrapper and generated plugin registrants are template/build infrastructure.
-- Flutter-generated plugin files such as `linux/flutter/generated_plugin_registrant.cc`, `windows/flutter/generated_plugin_registrant.cc`, and `macos/Flutter/GeneratedPluginRegistrant.swift` should be classified generated.
-
-No evidence of a copied application template was found in the reviewed source. Flutter package APIs and platform scaffolding are legitimate dependencies rather than evidence of source theft.
-
-## Security Findings
-
-### High risk
-
-1. **Default JWT/refresh secrets**
-   - Express: `server.js:12-13` generate ephemeral random secrets when unset, but restarting the server invalidates all sessions.
-   - Cloudflare: `backend_cf/src/index.js:108-109` use clearly weak development fallback strings.
-   - Production deployments must configure secrets in environment bindings.
-
-2. **Default/fallback QR HMAC secret**
-   - `lib/core/app_core.dart:16-20` has `CHANGE_ME_IN_PRODUCTION_VIA_DART_DEFINE` and CI supplies `CI_BUILD_SECRET_CHANGE_IN_PROD` at `github/workflows/ci_build.yml:34`.
-   - If both client and backend are misconfigured, forgery resistance is reduced or compromised.
-
-### Medium risk
-
-3. **Wildcard CORS**
-   - Cloudflare `backend_cf/src/index.js:5-8` uses `Access-Control-Allow-Origin: *`.
-   - Express uses `cors()` by default, also permissive. This is not itself a session compromise but permits broad cross-origin API access.
-
-4. **Server exception leakage**
-   - Cloudflare returns `detail: String(err.message || err)` for 500 responses at `backend_cf/src/index.js:198-200`. Stack or environment clues may leak.
-
-5. **Authorization scope gaps**
-   - Ticket checkout by token is authenticated but does not appear to verify that the token belongs to the caller's branch/operator.
-   - Ticket insert can use branch/operator fields from the body even though auth identity is available. This may allow cross-branch manipulation unless the API is deployed behind additional policy.
-
-6. **Cloudflare D1 schema initialization in request path**
-   - `ensureSchema(env.DB)` mutates or creates tables lazily at request time. There is no migration history or rollback mechanism.
-
-7. **No rate limiting or brute-force protection**
-   - Login/register routes have no evident throttling or lockout mechanism in either backend.
-
-8. **Password handling**
-   - PBKDF2 100,000 iterations in Cloudflare and scrypt in Express are reasonable base choices, but minimum password length is only 6 characters and public behavior may permit weak passwords.
-
-### Low risk / hardening issues
-
-- Refresh tokens are separately signed and 30 days, but no refresh-token revocation store or rotation is evident.
-- JWT fallback behavior differs between Express and Cloudflare.
-- Express memory mode loses users/tickets on restart and is unsuitable for multi-instance operation.
-- SSL in PostgreSQL is forced with `rejectUnauthorized: false` at `backend/server.js:27`, potentially accepting untrusted certificates.
-- Cloudflare uses a broad CORS allow-header list and no explicit origin allowlist.
-- QR signatures are only 16 hexadecimal characters (64 bits) in the reviewed implementation. This is not necessarily weak for a short-lived ticket, but 128/256-bit signatures would provide stronger forgery resistance.
-
-## Placeholder Features and Build Readiness
-
-### Placeholder or incomplete areas
-
-- `AppConfig.apiBaseUrl` defaults to `api.smartpark-enterprise.com/v1`; this is a likely deployment placeholder or external domain, not proof of a functioning service.
-- Express memory mode is explicitly a fallback and is not durable production storage.
-- The README's `22+` language count is not supported by the source.
-- Cloudflare and Express implementations diverge somewhat; there is no verified deployment manifest for production infrastructure.
-- No verified build logs or signed release artifacts are visible.
-- Dashboard, receipt, settings, and OCR code should be locally built and instrumented before feature claims are accepted.
-- `QR_HMAC_SECRET` instructions require each backend/client deployment to share an exact secret, but no secret-management setup or rotation procedure is included.
-
-### Build-readiness assessment
-
-**Likely buildable Android prototype:** The Flutter manifest, Gradle/Kotlin configuration, pubspec, and CI workflow provide a plausible Android build path.
-
-**CI limitation:** the CI file is under `github/workflows/ci_build.yml`. Standard GitHub Actions discovers workflows under `.github/workflows/`. Unless GitHub has normalized a duplicate `.github/workflows/ci_build.yml` that was not in the tree, this workflow is likely not active. The repository does contain an `.github/workflows/ci_build.yml` in the tree output, despite the top-level `github/` duplicate; yes, both directory entries exist. Verify the active workflow result from Actions UI. No workflow run/job result was retrieved.
-
-**Not verified:**
 - `flutter pub get`
 - `flutter analyze`
 - `flutter test`
 - Android APK build
-- iOS/macOS/web/desktop builds
-- Express/backend tests
-- Cloudflare deployment
-- OCR/ML Kit runtime
-- printer/thermal device behavior
+- iOS, macOS, web, Linux, or Windows builds
+- backend tests or deployment
+- Cloudflare bindings/D1 setup
+- runtime OCR and biometric behavior
+- physical receipt printing
 
-## Code Quality
+`pubspec.yaml` permits Dart `>=3.4.0 <4.0.0` and declares `intl: any`; pinning and reproducibility should be reviewed in dependency management. `pubspec.lock` exists, but no dependency vulnerability or license scan was run.
 
-### Strengths
+## 7. Git History, Contributors, and Commit Authenticity
 
-- Clear feature and core separation under `lib/core` and `lib/features`.
-- Riverpod providers separate auth, settings, parking state, API, and database dependencies.
-- Unit tests cover actual calculations and storage behavior.
-- Offline queue is represented explicitly and replayed upon connectivity.
-- Constant-time QR signature comparison is implemented.
-- Parameterized SQL queries are used in the reviewed Express, Cloudflare, and sqflite paths.
-- The code uses typed models and immutable copy methods in the Dart implementation.
+### First and latest commits
 
-### Weaknesses
+The date and author details distinguish the latest **repository** commit (the previous report creation) from the latest reviewed **application source** commit.
 
-- Exception handling often converts errors into generic UI/server messages, reducing diagnostics.
-- Cloudflare and Express duplicate substantial authentication and API logic instead of sharing a protocol implementation.
-- The test suite is small relative to the UI and backend surface.
-- CI is not sufficient without checking build, dependency, or security tooling results.
-- `README` overstates verified language support and may overstate production status.
-- Some long methods/files combine UI, state, persistence, and API behavior, with limited testability.
-- No API schema/OpenAPI contract or backend test suite was found.
+| Role | Author name | GitHub username / numeric ID | Profile | Commit URL | Date (UTC) | GitHub signature status |
+|---|---|---|---|---|---|---|
+| First visible commit | MuhammadUmairSattar | `MuhammadUmairSattar` / `344566430` | [github.com/MuhammadUmairSattar](https://github.com/MuhammadUmairSattar) | [Initial commit `4eb5cbb299150ff1cc5c668fd682f4ba6610d327`](https://github.com/MuhammadUmairSattar/Smart-Park/commit/4eb5cbb299150ff1cc5c668fd682f4ba6610d327) | 2026-11-20 14:52:59 | Verified |
+| Latest application-source commit reviewed | MuhammadUmairSattar | `MuhammadUmairSattar` / `344566430` | [Profile](https://github.com/MuhammadUmairSattar) | [Commit `a4dd2b25ca532fa602f081ccb333e3f2ef9c10b0`](https://github.com/MuhammadUmairSattar/Smart-Park/commit/a4dd2b25ca532fa602f081ccb333e3f2ef9c10b0) | 2026-11-22 13:48:57 | Verified |
+| Latest repository commit observed | MuhammadUmairSattar | `MuhammadUmairSattar` / `344566430` | [Profile](https://github.com/MuhammadUmairSattar) | [Report commit `6b0909c2060df4cb2f7080438d7f2ef063cb1f16`](https://github.com/MuhammadUmairSattar/Smart-Park/commit/6b0909c2060df4cb2f7080438d7f2ef063cb1f16) | 2026-11-23 03:41:23 | **Unverified/unsigned** |
 
-## Licensing Risks
+The report commit's GitHub response identifies the linked author account `MuhammadUmairSattar` (ID `344566430`) but signature verification is false. GitHub web-flow commits may use a different committer identity than their author. Verification status describes cryptographic signature verification; it does not independently establish whether the author identity or code is truthful.
 
-- MIT license is clear and repository metadata agrees.
-- Copyright owner is stated as Muhammad Umair Sattar.
-- Third-party Flutter packages require their own licenses and may carry NOTICE obligations depending on distribution.
-- No `NOTICE` or dependency-attribution file is present.
-- Flutter-generated assets and icons may include upstream-generated artifacts.
-- README's “All Rights Reserved” phrase conflicts conceptually with the MIT license; both can coexist, but the README text could confuse recipients. The repository owner should clarify that MIT terms govern repository code and that branding/content rights remain separate.
+### Contributors
 
-## Final Risk Matrix
+The repository contributor endpoint reported:
 
-| Severity | Finding | Evidence |
+- `MuhammadUmairSattar` — 72 contributions, account ID `344566430`
+- `bot` — 1 contribution, account ID `58210622`
+
+A bot-attributed initialization commit exists. Contributor counts are GitHub's contribution accounting, not a complete legal authorship statement.
+
+## 8. Originality, Templates, AI Indicators, and Ownership
+
+### Templates and generated content
+
+The repository has conventional Flutter platform directories and generated/template content: Android Gradle/platform setup, iOS/macOS project and asset structure, Linux/Windows runner scaffolding, web manifest/icons, and generated plugin registrants. Generated files such as `linux/flutter/generated_plugin_registrant.cc`, `windows/flutter/generated_plugin_registrant.cc`, and `macos/Flutter/GeneratedPluginRegistrant.swift` should be excluded from an authored-original LOC figure unless modifications are independently established.
+
+No vendored dependency tree was observed in the inspected recursive tree. That does not prove all application source is original; similarity search or upstream comparison was not performed.
+
+### AI-assisted code indicators
+
+Rapid, regular commits, unusually polished broad implementations, highly descriptive messages, and a bot initialization commit may be consistent with automated or AI-assisted work. **These are not proof of AI generation.** No detector, source comparison, or author interview was performed. Do not treat stylistic indicators as a factual attribution.
+
+### Ownership and licensing
+
+- `LICENSE` contains MIT terms and copyright `(c) 2026 Muhammad Umair Sattar`.
+- Repository metadata reports MIT.
+- This supports the repository's declared license, not a legal finding that the owner holds rights to every contributed/generated asset.
+- No separate dependency `NOTICE`/license inventory was found in the tree reviewed.
+- Platform scaffolding and third-party dependencies may have their own licensing obligations.
+- README's “All Rights Reserved” wording should be clarified against the repository's MIT grant; branding and code licensing can be distinct, but the README should say so explicitly.
+
+## 9. Security Review Findings
+
+These findings arise from reading source. No exploit, dynamic test, or third-party vulnerability scan was performed.
+
+### High priority
+
+1. **Development fallback secrets must not reach production.**
+   - `lib/core/app_core.dart` has a placeholder default QR HMAC secret.
+   - CI YAML uses a fallback secret when the repository secret is not set.
+   - `backend_cf/src/index.js` uses fixed default strings for JWT and refresh secrets.
+   - Enforce required secrets at deployment/startup and rotate any value that has been used outside isolated testing.
+
+2. **Ticket ownership/branch authorization should be explicit.**
+   - Ticket insert and checkout routes authenticate the caller, but the reviewed implementation does not visibly enforce that ticket/branch ownership matches the JWT claims.
+   - Validate caller role and branch server-side; never rely on client-supplied branch/operator values as authorization.
+
+### Medium priority
+
+3. **Permissive CORS.** Cloudflare `corsHeaders()` returns `Access-Control-Allow-Origin: *`; Express uses `cors()` without a restrictive origin policy. Restrict origins where browser access is expected.
+
+4. **Internal error detail in responses.** Cloudflare's 500 response includes an error detail string. Return a generic external message and retain sanitized server-side logs.
+
+5. **Express's in-memory fallback is non-durable.** `backend/server.js` uses maps when `DATABASE_URL` is absent, losing stored state on restart and not supporting shared multi-instance state. Fail closed or clearly limit it to development.
+
+6. **No visible throttling.** Reviewed login/register routes do not show rate limiting or lockout controls. Add abuse protection and monitoring.
+
+7. **Password policy is minimal.** Both backend implementations accept passwords at six characters; revisit length, abuse detection, and account recovery policy.
+
+8. **Database lifecycle.** Cloudflare creates schema lazily from request handling; there is no visible versioned migration/rollback process.
+
+### Additional hardening
+
+- Express PostgreSQL connection uses `ssl: { rejectUnauthorized: false }`; require certificate verification in production.
+- Refresh-token rotation/revocation is not backed by a server-side token registry in the reviewed source.
+- QR signature output is truncated to 16 hex characters. Review threat model and protocol before relying on it for high-value use.
+- Review response-body validation, request-size limits, audit logging, data retention, and personal-data handling before deployment.
+
+## 10. Placeholders and Quality Assessment
+
+### Potential placeholders / unfinished deployment configuration
+
+- API base URL defaults to `https://api.smartpark-enterprise.com/v1`; source alone does not prove this is a live or controlled production service.
+- Express's in-memory mode is explicitly temporary.
+- Environment/secret setup for consistent client and backend QR HMAC keys is not operationally documented.
+- No evidence of production Cloudflare deployment, production database configuration, or signed release is included in the audited evidence.
+
+### Quality strengths
+
+- App code is organized under `lib/core` and `lib/features`.
+- Riverpod providers separate key state services.
+- Local database and sync queue are explicit.
+- HMAC comparison uses a constant-time loop.
+- Reviewed SQL operations use bound/parameterized values.
+- Tests cover calculations, QR tamper rejection, persistence, queueing, and auth validation.
+
+### Quality limitations
+
+- Test coverage is small relative to app and backend surface.
+- Two backend implementations duplicate logic and may drift.
+- No backend test suite or API schema/contract was identified in the inspected tree.
+- Several larger source files combine domain logic, persistence, networking, and state handling.
+- CI configuration exists, but no successful run was verified.
+
+## 11. Risk Matrix
+
+| Severity | Finding | Evidence / impact |
 |---|---|---|
-| High | Weak production secret configuration | `AppConfig`, Express and Cloudflare fallback secrets, CI fallback secret |
-| High | Production readiness cannot be verified | No executed build/test evidence; external API/domain assumptions |
-| Medium | Authorization scope weak | Checkout/ticket routes and branch/operator context |
-| Medium | Broad CORS and exception leakage | Cloudflare headers and 500 response detail |
-| Medium | README feature overstatement | 22+ languages vs. 3 code entries |
-| Medium | Memory fallback backend | Express `DATABASE_URL` absent branch |
-| Medium | CI/Actions status not verified | Workflow path and no run logs |
-| Low | Weak password floor and no rate limiting | 6-character minimum, no throttle |
-| Low | License/NOTICE ambiguity | MIT only, no third-party attribution inventory |
+| High | Fallback/placeholder cryptographic secrets | App config, CI fallback, Cloudflare defaults |
+| High | Authorization ownership checks not evident | Ticket create/checkout API source |
+| High | Production status/build not established | No executed builds, tests, or deployment evidence |
+| Medium | Wildcard/permissive CORS | Cloudflare and Express setup |
+| Medium | Internal exception detail returned | Cloudflare 500 handler |
+| Medium | Non-durable backend fallback | Express memory maps when no DB URL |
+| Medium | README language count mismatch | 22+ claim vs. 3 source locales |
+| Medium | Lack of visible rate limiting | Auth handlers |
+| Low/Medium | Dependency licensing and attribution not inventoried | No `NOTICE`/license inventory observed |
+| Low | Unsigned report commit | GitHub verification false; not proof of maliciousness |
 
-## Final Recommendation
+## 12. Final Recommendation and Action Plan
 
-**Do not treat this repository as production-ready until the secret, authorization, deployment, and build-readiness issues are addressed.** It is appropriate for an open-source prototype, portfolio demo, or controlled staging environment. Before production:
+**Conditional hold for production.** Appropriate for a prototype, educational/portfolio demonstration, or controlled staging with non-sensitive data; do not rely on this audit as a security certification.
 
-1. Remove all fallback development secrets and enforce missing-secret startup failure.
-2. Use a secrets manager and document a safe 128/256-bit QR HMAC key.
-3. Restrict CORS origins and remove server exception details.
-4. Add branch/operator authorization checks to all ticket operations.
-5. Add database migrations and remove or isolate the ephemeral memory backend.
-6. Enable brute-force/rate limiting and stronger password policy.
-7. Confirm the actual GitHub Actions workflow and add backend/test/security scans.
-8. Build Android and iOS locally or in CI and retain signed logs/artifacts.
-9. Correct README claims to match 3 verified languages or implement the claimed languages.
-10. Add a dependency/NOTICE inventory and clarify branding versus MIT licensing.
-11. Add an exact LOC/counting report from a local clone after excluding generated, vendor, asset, localization, and template files.
+Prioritized steps:
 
-## Evidence and Limitations
+1. Remove fixed/default secret fallbacks; require environment-managed secrets and document rotation.
+2. Enforce server-side tenant, branch, role, and ticket ownership on every mutation/read route.
+3. Restrict CORS, sanitize 500 responses, and configure request limits and abuse protection.
+4. Disable the Express in-memory mode outside explicit development/test runs; require verified TLS.
+5. Add migrations, backend tests, API contract tests, and a successful CI build record.
+6. Run Android/iOS builds and validate biometric, OCR, offline replay, and printer behavior on representative devices.
+7. Correct the README's language count or implement and test the advertised locales; validate theme counts too.
+8. Create dependency license/NOTICE inventory and clarify MIT scope versus branding/copyright language.
+9. Obtain exact source LOC with a local checkout and a reproducible counting policy, then classify generated/template/localization/external code separately.
+10. Use a similarity/provenance review before making strong originality or ownership claims.
 
-Facts in this report are supported by GitHub repository metadata, commit API results, recursive tree inventory, README/manifests/licenses, and direct source reads from `main`. Claims labeled as assumptions or not-verifiable were not converted into unsupported facts.
+## 13. Evidence Limitations
 
-Limitations:
-
-- No local shell, local clone, build, test runner, or dependency scanner was available.
-- Exact LOC totals and third-party provenance cannot be proven without local content/cloc/license scans.
-- Runtime security and application behavior are not verified by executing code.
-- Public/private history is not exposed by GitHub metadata available here; exact transition date cannot be determined.
+- Exact raw/eligible/excluded/verified-original LOC values were not calculated; no local clone or LOC tool was available.
+- GitHub language byte percentages are not LOC and do not prove source originality.
+- No source similarity, AI provenance, dependency vulnerability, or dependency-license scan was run.
+- No app code was executed; CI, build, tests, backend, OCR, biometric, and printing behavior are unverified.
+- Current public visibility is verified; prior visibility and any exact public/private transition date are not verifiable from the available metadata.
+- Commit identity/signature observations describe GitHub metadata only, not a legal or personnel identity verification.
