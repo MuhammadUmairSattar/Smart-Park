@@ -18,7 +18,7 @@ void main() {
       final ticket = ParkingTicket(
         tokenNumber: 'TKN-1',
         branchId: 'MAIN',
-        businessName: 'Test Plaza',
+        businessName: 'SmartPark Pro',
         currency: 'Rs.',
         vehicleType: VehicleType.car,
         plateNumber: 'LEA-2026',
@@ -32,6 +32,7 @@ void main() {
         isVipPass: false,
         entryTime: entry,
         exitTime: exit,
+        status: TicketStatus.checkedOut,
         qrSignature: 'sig',
       );
       expect(ticket.calculateTotalFee(), 0);
@@ -43,7 +44,7 @@ void main() {
       final ticket = ParkingTicket(
         tokenNumber: 'TKN-2',
         branchId: 'MAIN',
-        businessName: 'Test Plaza',
+        businessName: 'SmartPark Pro',
         currency: 'Rs.',
         vehicleType: VehicleType.car,
         plateNumber: 'ICT-991',
@@ -69,7 +70,7 @@ void main() {
       final ticket = ParkingTicket(
         tokenNumber: 'TKN-3',
         branchId: 'MAIN',
-        businessName: 'Test Plaza',
+        businessName: 'SmartPark Pro',
         currency: 'Rs.',
         vehicleType: VehicleType.truck,
         plateNumber: 'VIP-001',
@@ -83,7 +84,6 @@ void main() {
         isVipPass: true,
         entryTime: entry,
         exitTime: exit,
-        status: TicketStatus.checkedOut,
         qrSignature: 'sig',
       );
       expect(ticket.calculateTotalFee(), 0);
@@ -128,7 +128,7 @@ void main() {
       final ticket = ParkingTicket(
         tokenNumber: 'TKN-TEST-1',
         branchId: 'MAIN',
-        businessName: 'Plaza',
+        businessName: 'SmartPark Pro',
         currency: 'Rs.',
         vehicleType: VehicleType.motorcycle,
         plateNumber: 'RIW-55',
