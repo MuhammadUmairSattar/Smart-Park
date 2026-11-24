@@ -95,7 +95,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     await ref.read(settingsProvider.notifier).updateAll(
           cur.copyWith(
             businessName: _bizCtrl.text.trim().isEmpty
-                ? 'SmartPark Pro Plaza'
+                ? 'SmartPark Pro'
                 : _bizCtrl.text.trim(),
             currency:
                 _currCtrl.text.trim().isEmpty ? 'Rs.' : _currCtrl.text.trim(),
@@ -164,7 +164,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         TextField(
           controller: _bizCtrl,
           decoration: const InputDecoration(
-            labelText: 'Business / Plaza Name',
+            labelText: 'Organization / Site Name',
             prefixIcon: Icon(Icons.storefront),
           ),
         ),
