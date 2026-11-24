@@ -83,6 +83,7 @@ void main() {
         isVipPass: true,
         entryTime: entry,
         exitTime: exit,
+        status: TicketStatus.checkedOut,
         qrSignature: 'sig',
       );
       expect(ticket.calculateTotalFee(), 0);
