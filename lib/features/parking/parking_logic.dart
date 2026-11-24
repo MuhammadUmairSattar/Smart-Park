@@ -149,7 +149,7 @@ class VehicleRateConfig {
   const VehicleRateConfig({
     this.baseFee = 0,
     this.hourlyRate = 0,
-    this.graceMinutes = 15,
+    this.graceMinutes = 0,
     this.enabled = true,
   });
 
@@ -164,7 +164,7 @@ class VehicleRateConfig {
       VehicleRateConfig(
         baseFee: (j['baseFee'] as num?)?.toDouble() ?? 0,
         hourlyRate: (j['hourlyRate'] as num?)?.toDouble() ?? 0,
-        graceMinutes: (j['graceMinutes'] as num?)?.toInt() ?? 15,
+        graceMinutes: (j['graceMinutes'] as num?)?.toInt() ?? 0,
         enabled: j['enabled'] as bool? ?? true,
       );
 }
@@ -174,10 +174,10 @@ class BranchConfig {
   final String name;
   const BranchConfig({required this.id, required this.name});
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name};
+  Map<String, dynamic> toJson() => {'id': id, 'GATE2': name};
   factory BranchConfig.fromJson(Map<String, dynamic> j) => BranchConfig(
         id: j['id'] as String? ?? 'MAIN',
-        name: j['name'] as String? ?? 'Main Plaza',
+        name: j['name'] as String? ?? 'Main Gate',
       );
 }
 
@@ -207,7 +207,7 @@ class BusinessSettings {
   });
 
   factory BusinessSettings.initial() => BusinessSettings(
-        businessName: 'SmartPark Pro Plaza',
+        businessName: 'SmartPark Pro',
         currency: 'Rs.',
         defaultSlot: 'Zone A - Bay 01',
         hourlyBilling: true,
@@ -216,13 +216,13 @@ class BusinessSettings {
         designStyleIndex: 0,
         activeBranchId: 'MAIN',
         branches: const [
-          BranchConfig(id: 'MAIN', name: 'Main Plaza'),
-          BranchConfig(id: 'NORTH', name: 'North Gate Lot'),
+          BranchConfig(id: 'MAIN', name: 'Main Gate'),
+          BranchConfig(id: 'GATE2', name: 'GATE 02'),
         ],
         rates: {
           for (final v in VehicleType.values)
             v: const VehicleRateConfig(
-                baseFee: 0, hourlyRate: 0, graceMinutes: 15, enabled: true),
+                baseFee: 0, hourlyRate: 0, graceMinutes: 0, enabled: true),
         },
       );
 
@@ -433,7 +433,11 @@ class ParkingTicket {
     if (isVipPass) return 0;
     final end = exitTime ?? refTime ?? DateTime.now();
     final totalMinutes = end.difference(entryTime).inMinutes;
-    if (totalMinutes <= graceMinutes) return 0;
+    if (graceMinutes > 0 &&
+    status == TicketStatus.checkedOut &&
+    totalMinutes <= graceMinutes) {
+  return 0;
+    }
     if (!hourlyBilling) return baseFee;
 
     final billableMinutes = totalMinutes - 60;
