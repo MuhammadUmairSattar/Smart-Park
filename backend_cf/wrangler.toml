@@ -1,3 +1,8 @@
 name = "smartpark-pro-api"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "smartpark-db"
+database_id = "fdfbb603-f60e-4173-ab13-45ef742a37db"
