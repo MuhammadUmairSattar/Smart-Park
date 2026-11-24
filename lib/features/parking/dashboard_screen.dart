@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -13,6 +13,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../../core/app_core.dart';
+import '../../core/luxury_ui.dart';
 import 'parking_logic.dart';
 import 'receipt_screen.dart';
 import 'settings_screen.dart';
@@ -143,6 +144,7 @@ class _ProDashboardScreenState extends ConsumerState<ProDashboardScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: const Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
           content: Text(AppLocalizations.tr('validation_entry')),
         ),
       );
@@ -232,7 +234,6 @@ class _ProDashboardScreenState extends ConsumerState<ProDashboardScreen>
     );
     await Printing.layoutPdf(onLayout: (_) async => pdf.save());
   }
-
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(parkingProvider);
@@ -257,14 +258,14 @@ class _ProDashboardScreenState extends ConsumerState<ProDashboardScreen>
           children: [
             Text(
               cfg.businessName,
-              style: TextStyle(
+              style: GoogleFonts.outfit(
                 color: theme.accent,
                 fontWeight: FontWeight.w800,
-                fontSize: 15,
+                fontSize: 17,
               ),
             ),
             Text(
-              '${cfg.activeBranch.name} (${cfg.activeBranch.id})',
+              '${cfg.activeBranch.name} • ${cfg.activeBranch.id}',
               style: TextStyle(color: theme.textMuted, fontSize: 11),
             ),
           ],
@@ -304,142 +305,119 @@ class _ProDashboardScreenState extends ConsumerState<ProDashboardScreen>
             onPressed: () => ref.read(authProvider.notifier).logout(),
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: theme.accent,
-          labelColor: theme.accent,
-          unselectedLabelColor: theme.textMuted,
-          tabs: [
-            Tab(
-              icon: const Icon(Icons.add_circle_outline),
-              text: AppLocalizations.tr('new_entry'),
-            ),
-            Tab(
-              icon: const Icon(Icons.directions_car_filled_outlined),
-              text:
-                  '${AppLocalizations.tr('active_tab')} (${activeList.length})',
-            ),
-            Tab(
-              icon: const Icon(Icons.analytics_outlined),
-              text: AppLocalizations.tr('analytics_tab'),
-            ),
-          ],
-        ),
       ),
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            color: theme.bgSurface,
-            child: Row(
-              children: [
-                _kpi(
-                  AppLocalizations.tr('revenue'),
-                  '${cfg.currency} ${state.todayRevenueForBranch(branchId).toStringAsFixed(0)}',
-                  theme.secondary,
-                  Icons.trending_up,
-                  theme,
-                  style,
-                ),
-                const SizedBox(width: 8),
-                _kpi(
-                  AppLocalizations.tr('parked'),
-                  '${activeList.length}',
-                  theme.accent,
-                  Icons.local_parking,
-                  theme,
-                  style,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: InkWell(
-                    onTap: state.isSyncing
-                        ? null
-                        : () => ref
-                            .read(parkingProvider.notifier)
-                            .syncPendingQueue(),
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: theme.bgCard,
-                        borderRadius: BorderRadius.circular(style.radius),
-                        border: Border.all(color: theme.borderColor),
-                      ),
+      body: AmbientBackdrop(
+        theme: theme,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 2),
+              child: ExecutiveCard(
+                theme: theme,
+                style: style,
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            AppLocalizations.tr('pending_sync'),
-                            style:
-                                TextStyle(color: theme.textMuted, fontSize: 10),
-                          ),
-                          Text(
-                            state.isSyncing
-                                ? '...'
-                                : '${state.pendingSyncCount}',
+                            AppLocalizations.tr('revenue').toUpperCase(),
                             style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: state.pendingSyncCount > 0
-                                  ? const Color(0xFFF59E0B)
-                                  : theme.secondary,
+                              color: theme.textMuted,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.9,
                             ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            '${cfg.currency} ${state.todayRevenueForBranch(branchId).toStringAsFixed(0)}',
+                            style: GoogleFonts.jetBrainsMono(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: theme.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildEntryTab(
-                    state.isLoading, cfg, theme, style, enabledVehicles),
-                _buildActiveTab(activeList, theme, style),
-                _buildAnalyticsTab(cfg, state, theme, style),
-              ],
-            ),
-          ),
-          DeveloperWatermark(theme: theme),
-        ],
-      ),
-    );
-  }
-Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
-          CardDesignStyle style) =>
-      Expanded(
-        child: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: theme.bgCard,
-            borderRadius: BorderRadius.circular(style.radius),
-            border: Border.all(color: theme.borderColor),
-          ),
-          child: Row(
-            children: [
-              Icon(i, color: c, size: 18),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(t,
-                        style: TextStyle(color: theme.textMuted, fontSize: 10),
-                        overflow: TextOverflow.ellipsis),
-                    Text(v,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 13),
-                        overflow: TextOverflow.ellipsis),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        StatusPill(
+                          label: '${activeList.length} ${AppLocalizations.tr('parked')}',
+                          color: theme.accent,
+                        ),
+                        const SizedBox(height: 6),
+                        InkWell(
+                          onTap: state.isSyncing
+                              ? null
+                              : () => ref
+                                  .read(parkingProvider.notifier)
+                                  .syncPendingQueue(),
+                          child: StatusPill(
+                            label: state.isSyncing
+                                ? 'SYNCING...'
+                                : (state.pendingSyncCount > 0
+                                    ? '${state.pendingSyncCount} ${AppLocalizations.tr('pending_sync')}'
+                                    : 'CLOUD SYNCED'),
+                            color: state.pendingSyncCount > 0
+                                ? const Color(0xFFF59E0B)
+                                : theme.secondary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+            AnimatedBuilder(
+              animation: _tabController,
+              builder: (_, __) => SegmentedPillTabs(
+                theme: theme,
+                currentIndex: _tabController.index,
+                onTap: (i) {
+                  HapticFeedback.selectionClick();
+                  _tabController.animateTo(i);
+                },
+                items: [
+                  (
+                    label: AppLocalizations.tr('new_entry'),
+                    icon: Icons.add_circle_outline,
+                  ),
+                  (
+                    label:
+                        '${AppLocalizations.tr('active_tab')} (${activeList.length})',
+                    icon: Icons.directions_car_filled_outlined,
+                  ),
+                  (
+                    label: AppLocalizations.tr('analytics_tab'),
+                    icon: Icons.analytics_outlined,
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildEntryTab(
+                      state.isLoading, cfg, theme, style, enabledVehicles),
+                  _buildActiveTab(activeList, theme, style),
+                  _buildAnalyticsTab(cfg, state, theme, style),
+                ],
+              ),
+            ),
+            DeveloperWatermark(theme: theme),
+          ],
         ),
-      );
+      ),
+    );
+  }
 
   Widget _buildEntryTab(
     bool loading,
@@ -449,16 +427,27 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
     List<VehicleType> vehicles,
   ) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: _plateCtrl,
+            builder: (_, val, __) => EmbossedPlateView(
+              plateText: val.text,
+              theme: theme,
+              style: style,
+            ),
+          ),
+          const SizedBox(height: 14),
           Text(
             AppLocalizations.tr('select_vehicle'),
             style: TextStyle(
-                color: theme.textMuted,
-                fontSize: 12,
-                fontWeight: FontWeight.bold),
+              color: theme.textMuted,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.0,
+            ),
           ),
           const SizedBox(height: 10),
           GridView.builder(
@@ -476,14 +465,27 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
               final sel = type == _selectedType;
               final fee = cfg.rates[type]?.baseFee ?? 0;
               return GestureDetector(
-                onTap: () => setState(() => _selectedType = type),
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _selectedType = type);
+                },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   decoration: BoxDecoration(
                     color: sel ? theme.accent : theme.bgCard,
                     borderRadius: BorderRadius.circular(style.radius * 0.85),
                     border: Border.all(
-                        color: sel ? theme.accent : theme.borderColor),
+                      color: sel ? theme.accent : theme.borderColor,
+                    ),
+                    boxShadow: sel
+                        ? [
+                            BoxShadow(
+                              color: theme.accent.withValues(alpha: 0.28),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : null,
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -503,11 +505,12 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
                       ),
                       Text(
                         '${cfg.currency}${fee.toInt()}',
-                        style: TextStyle(
+                        style: GoogleFonts.jetBrainsMono(
                           color: sel
-                              ? theme.textOnAccent.withValues(alpha: 0.8)
+                              ? theme.textOnAccent.withValues(alpha: 0.85)
                               : theme.textMuted,
                           fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
@@ -516,7 +519,7 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
               );
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
             height: 50,
@@ -524,8 +527,6 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.secondary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(style.radius * 0.85)),
               ),
               onPressed: _isScanning ? null : _scanPlateWithAI,
               icon: _isScanning
@@ -536,12 +537,9 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
                           color: Colors.white, strokeWidth: 2),
                     )
                   : const Icon(Icons.document_scanner_rounded),
-              label: Text(
-                _isScanning
-                    ? AppLocalizations.tr('scanning_plate')
-                    : AppLocalizations.tr('scan_plate'),
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
+              label: Text(_isScanning
+                  ? AppLocalizations.tr('scanning_plate')
+                  : AppLocalizations.tr('scan_plate')),
             ),
           ),
           if (_ocrCandidates.isNotEmpty) ...[
@@ -552,7 +550,8 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
                   .map(
                     (c) => ActionChip(
                       label: Text(c,
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                          style: GoogleFonts.jetBrainsMono(
+                              fontWeight: FontWeight.bold)),
                       onPressed: () => setState(() => _plateCtrl.text = c),
                     ),
                   )
@@ -592,8 +591,6 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.accent,
                 foregroundColor: theme.textOnAccent,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(style.radius)),
               ),
               onPressed: loading ? null : _issueToken,
               child: Text(
@@ -607,7 +604,6 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
       ),
     );
   }
-
   Widget _buildActiveTab(
     List<ParkingTicket> list,
     AppThemePreset theme,
@@ -625,17 +621,14 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (_, i) {
         final t = list[i];
-        return Container(
+        return ExecutiveCard(
+          theme: theme,
+          style: style,
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: theme.bgCard,
-            borderRadius: BorderRadius.circular(style.radius),
-            border: Border.all(color: theme.borderColor),
-          ),
           child: Row(
             children: [
               CircleAvatar(
-                backgroundColor: theme.accent.withValues(alpha: 0.15),
+                backgroundColor: theme.accent.withValues(alpha: 0.14),
                 child: Icon(t.vehicleType.icon, color: theme.accent),
               ),
               const SizedBox(width: 12),
@@ -645,9 +638,16 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
                   children: [
                     Row(
                       children: [
-                        Text('${t.plateNumber} • ${t.tokenNumber}',
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
+                        Flexible(
+                          child: Text(
+                            t.plateNumber,
+                            style: GoogleFonts.jetBrainsMono(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                         const SizedBox(width: 6),
                         Icon(
                           t.isSynced
@@ -660,11 +660,18 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
                         ),
                       ],
                     ),
-                    Text('${t.ownerName} | ${t.locationSlot}',
-                        style: TextStyle(color: theme.textMuted, fontSize: 12)),
+                    Text(
+                      '${t.tokenNumber} • ${t.ownerName}',
+                      style: TextStyle(color: theme.textMuted, fontSize: 11.5),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     Text(
                       '${DateFormat('hh:mm a, dd MMM').format(t.entryTime)} • ${t.currency} ${t.calculateTotalFee().toStringAsFixed(0)}',
-                      style: TextStyle(color: theme.secondary, fontSize: 11),
+                      style: GoogleFonts.jetBrainsMono(
+                        color: theme.secondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
@@ -686,7 +693,7 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
                   }
                 },
                 child: Text(AppLocalizations.tr('exit_btn'),
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                    style: const TextStyle(fontSize: 12)),
               ),
             ],
           ),
@@ -710,7 +717,7 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
       children: [
         Row(
           children: [
-            _kpi(
+            _miniKpi(
               'Monthly Revenue',
               '${cfg.currency} ${state.monthlyRevenueForBranch(branchId).toStringAsFixed(0)}',
               theme.accent,
@@ -719,7 +726,7 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
               style,
             ),
             const SizedBox(width: 10),
-            _kpi(
+            _miniKpi(
               'Total Tickets',
               '$totalUnits',
               theme.secondary,
@@ -730,18 +737,15 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
           ],
         ),
         const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.bgCard,
-            borderRadius: BorderRadius.circular(style.radius),
-            border: Border.all(color: theme.borderColor),
-          ),
+        ExecutiveCard(
+          theme: theme,
+          style: style,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Vehicle Mix Analytics',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              Text('Vehicle Mix Analytics',
+                  style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.w800, fontSize: 16)),
               const SizedBox(height: 12),
               ...VehicleType.values.map((v) {
                 final c = counts[v] ?? 0;
@@ -756,16 +760,20 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
                         children: [
                           Text(AppLocalizations.tr(v.labelKey)),
                           Text('$c units',
-                              style: TextStyle(
+                              style: GoogleFonts.jetBrainsMono(
                                   color: theme.accent,
                                   fontWeight: FontWeight.bold)),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      LinearProgressIndicator(
-                        value: ratio,
-                        backgroundColor: theme.bgSurface,
-                        color: theme.accent,
+                      const SizedBox(height: 5),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          value: ratio,
+                          minHeight: 7,
+                          backgroundColor: theme.bgSurface,
+                          color: theme.accent,
+                        ),
                       ),
                     ],
                   ),
@@ -796,6 +804,8 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
                   foregroundColor: theme.accent,
                   side: BorderSide(color: theme.accent),
                   minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(style.radius * 0.8)),
                 ),
                 onPressed: () => _exportCsv(branchId),
                 icon: const Icon(Icons.table_chart_outlined),
@@ -807,6 +817,36 @@ Widget _kpi(String t, String v, Color c, IconData i, AppThemePreset theme,
       ],
     );
   }
+
+  Widget _miniKpi(String t, String v, Color c, IconData i,
+          AppThemePreset theme, CardDesignStyle style) =>
+      Expanded(
+        child: ExecutiveCard(
+          theme: theme,
+          style: style,
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Icon(i, color: c, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(t,
+                        style: TextStyle(color: theme.textMuted, fontSize: 11),
+                        overflow: TextOverflow.ellipsis),
+                    Text(v,
+                        style: GoogleFonts.jetBrainsMono(
+                            fontWeight: FontWeight.w800, fontSize: 15),
+                        overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
 }
 
 class QrExitScannerScreen extends ConsumerStatefulWidget {
@@ -867,9 +907,24 @@ class _QrExitScannerScreenState extends ConsumerState<QrExitScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = ref.watch(settingsProvider).activeTheme;
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.tr('qr_exit'))),
-      body: MobileScanner(onDetect: _onDetect),
+      body: Stack(
+        children: [
+          MobileScanner(onDetect: _onDetect),
+          Center(
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                border: Border.all(color: theme.accent, width: 3),
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
