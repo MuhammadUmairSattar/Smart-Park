@@ -1,18 +1,20 @@
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../../core/app_core.dart';
+import '../../core/luxury_ui.dart';
 import 'parking_logic.dart';
 
 class LuxuryTicketClipper extends CustomClipper<Path> {
   final double holeRadius;
   final double cutPositionRatio;
-  LuxuryTicketClipper({this.holeRadius = 16, this.cutPositionRatio = 0.64});
+  LuxuryTicketClipper({this.holeRadius = 16, this.cutPositionRatio = 0.65});
 
   @override
   Path getClip(Size size) {
@@ -137,8 +139,7 @@ class VipReceiptScreen extends ConsumerWidget {
     );
     await Printing.layoutPdf(onLayout: (_) async => pdf.save());
   }
-
-  @override
+ @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = ref.watch(settingsProvider).activeTheme;
     final isClosed = ticket.status == TicketStatus.checkedOut;
@@ -149,151 +150,160 @@ class VipReceiptScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(isClosed ? 'Final Exit Receipt' : 'Signed Parking Pass'),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    ClipPath(
-                      clipper: LuxuryTicketClipper(),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(22),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              '${ticket.businessName} (${ticket.branchId})',
-                              style: const TextStyle(
-                                color: Color(0xFF0F172A),
-                                fontWeight: FontWeight.w800,
-                                fontSize: 13.5,
+      body: AmbientBackdrop(
+        theme: theme,
+        child: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      ClipPath(
+                        clipper: LuxuryTicketClipper(),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                '${ticket.businessName} • ${ticket.branchId}',
+                                style: GoogleFonts.outfit(
+                                  color: const Color(0xFF0F172A),
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 14,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: isClosed
-                                    ? const Color(0x1A10B981)
-                                    : const Color(0x1AD4AF37),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                ticket.isVipPass
+                              const SizedBox(height: 8),
+                              StatusPill(
+                                label: ticket.isVipPass
                                     ? 'VIP PASS • ${isClosed ? "EXITED" : "ACTIVE"}'
                                     : (isClosed
                                         ? 'PAID & CHECKED OUT'
-                                        : 'ACTIVE SIGNED TOKEN'),
-                                style: TextStyle(
-                                  color: isClosed
-                                      ? const Color(0xFF10B981)
-                                      : const Color(0xFF9A7B16),
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 11,
+                                        : 'ACTIVE SIGNED PASS'),
+                                color: isClosed
+                                    ? const Color(0xFF10B981)
+                                    : const Color(0xFFB45309),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                ticket.tokenNumber,
+                                style: GoogleFonts.jetBrainsMono(
+                                  color: const Color(0xFF0F172A),
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.6,
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              ticket.tokenNumber,
-                              style: const TextStyle(
-                                color: Color(0xFF0F172A),
-                                fontSize: 23,
-                                fontWeight: FontWeight.w900,
+                              const SizedBox(height: 10),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                      color: const Color(0xFFCBD5E1)),
+                                ),
+                                child: Text(
+                                  ticket.plateNumber,
+                                  style: GoogleFonts.jetBrainsMono(
+                                    color: const Color(0xFF0F172A),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 2,
+                                  ),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 14),
-                            _row('Vehicle Class',
-                                AppLocalizations.tr(ticket.vehicleType.labelKey)),
-                            _row('Plate Number', ticket.plateNumber),
-                            _row('Driver / Owner', ticket.ownerName),
-                            _row('Location Bay', ticket.locationSlot),
-                            _row(
-                              'Entry Time',
-                              DateFormat('dd MMM yyyy, hh:mm:ss a')
-                                  .format(ticket.entryTime),
-                            ),
-                            if (ticket.exitTime != null)
+                              const SizedBox(height: 14),
+                              _row('Vehicle Class',
+                                  AppLocalizations.tr(ticket.vehicleType.labelKey)),
+                              _row('Driver / Owner', ticket.ownerName),
+                              _row('Location Bay', ticket.locationSlot),
                               _row(
-                                'Exit Time',
+                                'Entry Time',
                                 DateFormat('dd MMM yyyy, hh:mm:ss a')
-                                    .format(ticket.exitTime!),
+                                    .format(ticket.entryTime),
                               ),
-                            if (ticket.taxPercent > 0)
+                              if (ticket.exitTime != null)
+                                _row(
+                                  'Exit Time',
+                                  DateFormat('dd MMM yyyy, hh:mm:ss a')
+                                      .format(ticket.exitTime!),
+                                ),
+                              if (ticket.taxPercent > 0)
+                                _row(
+                                  'Subtotal + VAT (${ticket.taxPercent.toStringAsFixed(0)}%)',
+                                  '${ticket.currency} ${subtotal.toStringAsFixed(0)}',
+                                ),
                               _row(
-                                'Subtotal + VAT (${ticket.taxPercent.toStringAsFixed(0)}%)',
-                                '${ticket.currency} ${subtotal.toStringAsFixed(0)}',
+                                'Total Fee',
+                                '${ticket.currency} ${totalFee.toStringAsFixed(2)}',
+                                isBold: true,
                               ),
-                            _row(
-                              'Total Fee',
-                              '${ticket.currency} ${totalFee.toStringAsFixed(2)}',
-                              isBold: true,
-                            ),
-                            const SizedBox(height: 18),
-                            const DashedDivider(),
-                            const SizedBox(height: 18),
-                            BarcodeWidget(
-                              barcode: Barcode.qrCode(),
-                              data: ticket.signedQrData,
-                              width: 130,
-                              height: 130,
-                              color: Colors.black,
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'HMAC Signature: ${ticket.qrSignature}',
-                              style: const TextStyle(
-                                color: Colors.black45,
-                                fontSize: 9.5,
+                              const SizedBox(height: 18),
+                              const DashedDivider(),
+                              const SizedBox(height: 18),
+                              BarcodeWidget(
+                                barcode: Barcode.qrCode(),
+                                data: ticket.signedQrData,
+                                width: 128,
+                                height: 128,
+                                color: Colors.black,
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              'Developer: Muhammad Umair Sattar | © 2026',
-                              style: TextStyle(
-                                color: Colors.black45,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                              const SizedBox(height: 8),
+                              Text(
+                                'HMAC: ${ticket.qrSignature}',
+                                style: GoogleFonts.jetBrainsMono(
+                                  color: Colors.black45,
+                                  fontSize: 9.5,
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Developer: Muhammad Umair Sattar | © 2026',
+                                style: TextStyle(
+                                  color: Colors.black45,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 54,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.accent,
-                          foregroundColor: theme.textOnAccent,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16)),
-                        ),
-                        onPressed: _exportThermalPdf,
-                        icon: const Icon(Icons.print_rounded),
-                        label: Text(
-                          AppLocalizations.tr('print_receipt'),
-                          style: const TextStyle(fontWeight: FontWeight.w900),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 54,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.accent,
+                            foregroundColor: theme.textOnAccent,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16)),
+                          ),
+                          onPressed: _exportThermalPdf,
+                          icon: const Icon(Icons.print_rounded),
+                          label: Text(
+                            AppLocalizations.tr('print_receipt'),
+                            style: const TextStyle(fontWeight: FontWeight.w900),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          DeveloperWatermark(theme: theme),
-        ],
+            DeveloperWatermark(theme: theme),
+          ],
+        ),
       ),
     );
   }
@@ -313,7 +323,7 @@ class VipReceiptScreen extends ConsumerWidget {
                 color: isBold
                     ? const Color(0xFF047857)
                     : const Color(0xFF0F172A),
-                fontSize: isBold ? 15.5 : 13,
+                fontSize: isBold ? 16 : 13,
                 fontWeight: isBold ? FontWeight.w900 : FontWeight.w700,
               ),
             ),
@@ -322,4 +332,4 @@ class VipReceiptScreen extends ConsumerWidget {
       ),
     );
   }
-}
+} 
