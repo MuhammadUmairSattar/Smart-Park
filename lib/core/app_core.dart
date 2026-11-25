@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'l10n_extra.dart';
 import 'themes.dart';
-import 'world_locales.dart';
 export 'themes.dart';
 export 'world_locales.dart';
 
