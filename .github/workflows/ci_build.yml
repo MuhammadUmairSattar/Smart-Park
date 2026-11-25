@@ -22,6 +22,24 @@ jobs:
           cache: true
 
       - run: flutter pub get
+
+      - name: Prepare App Icon & Generate Launcher Icons
+        run: |
+          python3 - << 'EOF'
+          import glob, subprocess, sys
+          imgs = [f for f in glob.glob('assets/*') if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp'))]
+          if imgs:
+              subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-q', 'pillow'])
+              from PIL import Image
+              im = Image.open(imgs[0]).convert('RGBA')
+              size = max(im.size[0], im.size[1], 1024)
+              bg = Image.new('RGBA', (size, size), (255, 255, 255, 255))
+              im.thumbnail((int(size * 0.94), int(size * 0.94)), Image.Resampling.LANCZOS)
+              bg.paste(im, ((size - im.width) // 2, (size - im.height) // 2), im)
+              bg.save('assets/icon.png')
+          EOF
+          if [ -f assets/icon.png ]; then dart run flutter_launcher_icons; fi
+
       - run: flutter analyze --no-fatal-infos
       - run: flutter test
 
@@ -35,5 +53,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: SmartPark-Pro-APK
+          name: SmartPark-APK
           path: build/app/outputs/flutter-apk/app-release.apk
