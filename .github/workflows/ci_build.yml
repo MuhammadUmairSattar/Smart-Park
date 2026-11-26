@@ -25,10 +25,11 @@ jobs:
 
       - name: Generate App Icon from Uploaded Logo
         run: |
-          IMG=$(find assets/icon -maxdepth 1 -type f \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.webp" \) | head -n 1)
+          IMG=$(find assets -maxdepth 2 -type f \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.webp" \) | head -n 1)
           if [ -n "$IMG" ]; then
             python3 -m pip install -q pillow
-            python3 -c "from PIL import Image; im=Image.open('$IMG').convert('RGBA'); im.resize((1024,1024)).save('assets/icon/app_icon.png')"
+            mkdir -p assets/icon
+            python3 -c "from PIL import Image; im=Image.open('$IMG').convert('RGBA').resize((1024,1024)); im.save('assets/icon/app_icon.png'); im.save('assets/icon.png')"
             dart run flutter_launcher_icons
           fi
 
@@ -45,5 +46,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: SmartPark-APK
+          name: SmartPark-Pro-APK
           path: build/app/outputs/flutter-apk/app-release.apk
