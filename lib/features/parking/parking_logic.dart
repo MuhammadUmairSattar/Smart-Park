@@ -190,6 +190,7 @@ class BusinessSettings {
   final int themeIndex;
   final int designStyleIndex;
   final String activeBranchId;
+  final String countryFlag;
   final List<BranchConfig> branches;
   final Map<VehicleType, VehicleRateConfig> rates;
 
@@ -202,6 +203,7 @@ class BusinessSettings {
     required this.themeIndex,
     required this.designStyleIndex,
     required this.activeBranchId,
+    this.countryFlag = '🇵🇰',
     required this.branches,
     required this.rates,
   });
@@ -215,6 +217,7 @@ class BusinessSettings {
         themeIndex: 0,
         designStyleIndex: 0,
         activeBranchId: 'MAIN',
+        countryFlag: '🇵🇰',
         branches: const [
           BranchConfig(id: 'MAIN', name: 'Site 01'),
           BranchConfig(id: 'SITE2', name: 'Site 02'),
@@ -244,6 +247,7 @@ class BusinessSettings {
     int? themeIndex,
     int? designStyleIndex,
     String? activeBranchId,
+    String? countryFlag,
     List<BranchConfig>? branches,
     Map<VehicleType, VehicleRateConfig>? rates,
   }) {
@@ -256,6 +260,7 @@ class BusinessSettings {
       themeIndex: themeIndex ?? this.themeIndex,
       designStyleIndex: designStyleIndex ?? this.designStyleIndex,
       activeBranchId: activeBranchId ?? this.activeBranchId,
+      countryFlag: countryFlag ?? this.countryFlag,
       branches: branches ?? this.branches,
       rates: rates ?? this.rates,
     );
@@ -301,6 +306,7 @@ class SettingsNotifier extends Notifier<BusinessSettings> {
         themeIndex: map['themeIndex'] as int? ?? 0,
         designStyleIndex: map['designStyleIndex'] as int? ?? 0,
         activeBranchId: map['activeBranchId'] as String? ?? branches.first.id,
+        countryFlag: map['countryFlag'] as String? ?? '🇵🇰',
         branches: branches,
         rates: ratesMap,
       );
@@ -324,6 +330,7 @@ class SettingsNotifier extends Notifier<BusinessSettings> {
         'themeIndex': s.themeIndex,
         'designStyleIndex': s.designStyleIndex,
         'activeBranchId': s.activeBranchId,
+        'countryFlag': s.countryFlag,
         'branches': s.branches.map((b) => b.toJson()).toList(),
         'rates': {for (final e in s.rates.entries) e.key.name: e.value.toJson()},
       }),
@@ -350,7 +357,10 @@ class SettingsNotifier extends Notifier<BusinessSettings> {
 
   Future<void> applyCountryPreset(CountryPreset preset) async {
     await AppLocalizations.setLanguageByCode(preset.languageCode);
-    await _save(state.copyWith(currency: preset.currencySymbol));
+    await _save(state.copyWith(
+      currency: preset.currencySymbol,
+      countryFlag: preset.flag,
+    ));
   }
 }
 
