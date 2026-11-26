@@ -374,7 +374,7 @@ class _ProDashboardScreenState extends ConsumerState<ProDashboardScreen>
           IconButton(
             tooltip: 'Country & Language (55+)',
             icon: Text(
-              AppLocalizations.currentLanguage.value.flag,
+              cfg.countryFlag,
               style: const TextStyle(fontSize: 19),
             ),
             onPressed: () => _openCountryPicker(theme),
