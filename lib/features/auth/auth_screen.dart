@@ -235,7 +235,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     ActionChip(
                       backgroundColor: theme.bgCard,
                       side: BorderSide(color: theme.borderColor),
-                      avatar: Text(lang.flag),
+                      avatar: Text(settings.countryFlag),
                       label: Text(
                         '${lang.name} • 55+',
                         style: const TextStyle(
