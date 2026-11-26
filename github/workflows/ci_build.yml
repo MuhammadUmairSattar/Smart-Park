@@ -22,16 +22,27 @@ jobs:
           cache: true
 
       - run: flutter pub get
+
+      - name: Generate App Icon from Uploaded Logo
+        run: |
+          IMG=$(find assets -maxdepth 2 -type f \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.webp" \) | head -n 1)
+          if [ -n "$IMG" ]; then
+            python3 -m pip install -q pillow
+            mkdir -p assets/icon
+            python3 -c "from PIL import Image; im=Image.open('$IMG').convert('RGBA').resize((1024,1024)); im.save('assets/icon/app_icon.png'); im.save('assets/icon.png')"
+            dart run flutter_launcher_icons
+          fi
+
       - run: flutter analyze --no-fatal-infos
       - run: flutter test
 
       - name: Build Android APK
         env:
           ORG_GRADLE_PROJECT_ciUnsigned: "true"
-        run: >
-          flutter build apk --release
-          --dart-define=API_BASE_URL=${{ secrets.API_BASE_URL || 'https://api.smartpark-enterprise.com/v1' }}
-          --dart-define=QR_HMAC_SECRET=${{ secrets.QR_HMAC_SECRET || 'CI_BUILD_SECRET_CHANGE_IN_PROD' }}
+        run: |
+          flutter build apk --release \
+            --dart-define="API_BASE_URL=${{ secrets.API_BASE_URL || 'https://api.smartpark-enterprise.com/v1' }}" \
+            --dart-define="QR_HMAC_SECRET=${{ secrets.QR_HMAC_SECRET || 'CI_BUILD_SECRET_CHANGE_IN_PROD' }}"
 
       - uses: actions/upload-artifact@v4
         with:
